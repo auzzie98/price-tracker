@@ -1,10 +1,8 @@
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from pathlib import Path
-import sys
-
+# Ensure src directory is in sys.path for Azure Linux compatibility
+# where CWD is /home/site/wwwroot and Python cannot locate the price_tracker module
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
