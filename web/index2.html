@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Price Tracker</title>
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+<div class="header-bar">
+  <h1>Price Tracker</h1>
+  <nav>
+    <a href="/" class="active">Home</a>
+    <a href="/category/gpus">GPUs</a>
+    <a href="/category/cpus">CPUs</a>
+    <a href="/category/ram">RAM</a>
+    <a href="/methodology">Methodology</a>
+  </nav>
+</div>
+
+<div class="header-bar">
+  <h1>Price Tracker</h1>
+  <nav>
+    <a href="/" class="active">Home</a>
+    <a href="/category/gpus">GPUs</a>
+    <a href="/category/cpus">CPUs</a>
+    <a href="/category/ram">RAM</a>
+    <a href="/methodology">Methodology</a>
+  </nav>
+</div>
+
+  <!-- Big headline -->
+  <div class="headline">
+    <h2 class="page-title">Hardware prices, over time</h2>
+    <p class="page-subtitle">Tracks GPU, CPU, and RAM prices over time, like a stock chart.</p>
+  </div>
+
+  <!-- Indices pill row -->
+  <div class="indices-pills">
+    <button class="pill active" data-category="gpus">All GPUs 100.00 0.0%</button>
+    <button class="pill" data-category="cpus">All CPUs 100.00 0.0%</button>
+    <button class="pill" data-category="ram">All RAM 100.00 0.0%</button>
+  </div>
+
+  <!-- Large main chart -->
+  <canvas id="main-chart"></canvas>
+
+  <!-- Time toggles below chart -->
+  <div class="time-toggles">
+    <button class="toggle active" data-range="1d">1D</button>
+    <button class="toggle" data-range="1w">1W</button>
+    <button class="toggle" data-range="1m">1M</button>
+    <button class="toggle" data-range="1y">1Y</button>
+    <button class="toggle" data-range="all">All</button>
+  </div>
+
+  <!-- Individual models section -->
+  <div class="individual-models">
+    <h3 class="section-header">Individual models</h3>
+    <p class="model-label">Data is mock for demonstration purposes.</p>
+    <div class="model-list">
+      <div class="model-row">
+        <span class="model-name">ASUS Dual RTX 5070 579.99</span>
+        <span class="model-price">$579.99</span>
+        <span class="model-change">+0.0%</span>
+        <div class="model-sparkline"><canvas width="120" height="30"></canvas></div>
+      </div>
+      <div class="model-row">
+        <span class="model-name">AMD Ryzen 7 9800X3D 469.99</span>
+        <span class="model-price">$469.99</span>
+        <span class="model-change">+0.0%</span>
+        <div class="model-sparkline"><canvas width="120" height="30"></canvas></div>
+      </div>
+      <div class="model-row">
+        <span class="model-name">Corsair Vengeance 32GB DDR5-6000 CL30 239.99</span>
+        <span class="model-price">$239.99</span>
+        <span class="model-change">+0.0%</span>
+        <div class="model-sparkline"><canvas width="120" height="30"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Original tiles section - kept for loadIndexData API compatibility -->
+  <div class="tiles">
+    <div class="tile" id="tile-cpus">
+      <h3>All CPUs</h3>
+      <div class="tile-value" id="cpu-index">100.0</div>
+      <div class="tile-percent" id="cpu-change">0.0%</div>
+      <div class="tile-chart"><canvas id="cpu-chart" width="300" height="80"></canvas></div>
+    </div>
+    <div class="tile" id="tile-gpus">
+      <h3>All GPUs</h3>
+      <div class="tile-value" id="gpu-index">no data yet</div>
+      <div class="tile-percent" id="gpu-change">no data yet</div>
+      <div class="tile-chart"><canvas id="gpu-chart" width="300" height="80"></canvas></div>
+    </div>
+    <div class="tile" id="tile-ram">
+      <h3>All RAM</h3>
+      <div class="tile-value" id="ram-index">no data yet</div>
+      <div class="tile-percent" id="ram-change">no data yet</div>
+      <div class="tile-chart"><canvas id="ram-chart" width="300" height="80"></canvas></div>
+    </div>
+  </div>
+  <div class="movers">
+    <h3>Biggest movers</h3>
+    <div class="toggle-controls">
+      <button class="toggle active" data-range="1d">1D</button>
+      <button class="toggle" data-range="1w">1W</button>
+    </div>
+    <div class="movers-list" id="movers-list">
+      <p>No movers yet, need at least 2 data points per product.</p>
+    </div>
+  </div>
+  <script>
+    function drawChart(canvasId, values) {
+      var canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var min = Math.min.apply(null, values);
+      var max = Math.max.apply(null, values);
+      if (max === min) max = min + 1;
+      var up = values[values.length - 1] >= values[0];
+      ctx.strokeStyle = up ? '#36D6A0' : '#F07878';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      values.forEach(function(v, i) {
+        var x = i / (values.length - 1) * canvas.width;
+        var y = canvas.height - (v - min) / (max - min) * canvas.height;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+    function drawMainChart(canvasId, values, minPrice, maxPrice) {
+      var canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      var chartMin = minPrice || Math.min.apply(null, values);
+      var chartMax = maxPrice || Math.max.apply(null, values);
+      if (chartMax === chartMin) chartMax = chartMin + 1;
+      
+      // Create gradient fill under the line
+      var gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, 'rgba(54, 214, 160, 0.3)');
+      gradient.addColorStop(1, 'rgba(54, 214, 160, 0)');
+      
+      ctx.fillStyle = gradient;
+      ctx.strokeStyle = '#36D6A0';
+      ctx.lineWidth = 2;
+      
+      ctx.beginPath();
+      values.forEach(function(v, i) {
+        var x = i / (values.length - 1) * canvas.width;
+        var y = canvas.height - (v - chartMin) / (chartMax - chartMin) * canvas.height;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      
+      // Fill under the line
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.lineTo(0, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+    }
+    function mockHistory(endValue) {
+      var out = [];
+      var v = endValue * 0.98;
+      for (var i = 0; i < 30; i++) {
+        v = v + (Math.random() - 0.48) * 1.2;
+        out.push(v);
+      }
+      out[29] = endValue;
+      return out;
+    }
+    async function loadIndexData(range) {
+      try {
+        const indexesResp = await fetch('/api/indexes');
+        if (!indexesResp.ok) throw new Error('Failed to fetch indexes');
+        const indexes = await indexesResp.json();
+        const cpuData = indexes.categories.find(c => c.category === 'CPUs');
+        const gpuData = indexes.categories.find(c => c.category === 'GPUs');
+        const ramData = indexes.categories.find(c => c.category === 'RAM');
+        if (cpuData) {
+          document.getElementById('cpu-index').textContent = cpuData.index_value.toFixed(2);
+          document.getElementById('cpu-change').textContent = '0.0%';
+          drawChart('cpu-chart', mockHistory(cpuData.index_value));
+        }
+        if (gpuData) {
+          document.getElementById('gpu-index').textContent = gpuData.index_value.toFixed(2);
+          document.getElementById('gpu-change').textContent = '0.0%';
+          drawChart('gpu-chart', mockHistory(gpuData.index_value));
+        }
+        if (ramData) {
+          document.getElementById('ram-index').textContent = ramData.index_value.toFixed(2);
+          document.getElementById('ram-change').textContent = '0.0%';
+          drawChart('ram-chart', mockHistory(ramData.index_value));
+        }
+      } catch (err) {
+        console.error('Failed to load index data:', err);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load index data for tiles
+      loadIndexData();
+      
+      // Main chart setup
+      var mainChartCanvas = document.getElementById('main-chart');
+      // Mock history for All GPUs: [100, 99, 97.35, 95.65]
+      var mainChartValues = [100, 99, 97.35, 95.65];
+      var mainChartMin = 95;
+      var mainChartMax = 105;
+      
+      function drawMainChartUI() {
+        if (!mainChartCanvas) return;
+        var ctx = mainChartCanvas.getContext('2d');
+        ctx.clearRect(0, 0, mainChartCanvas.width, mainChartCanvas.height);
+        
+        // Create gradient fill under the line
+        var gradient = ctx.createLinearGradient(0, 0, 0, mainChartCanvas.height);
+        gradient.addColorStop(0, 'rgba(54, 214, 160, 0.3)');
+        gradient.addColorStop(1, 'rgba(54, 214, 160, 0)');
+        
+        ctx.fillStyle = gradient;
+        ctx.strokeStyle = '#36D6A0';
+        ctx.lineWidth = 2;
+        
+        ctx.beginPath();
+        mainChartValues.forEach(function(v, i) {
+          var x = i / (mainChartValues.length - 1) * mainChartCanvas.width;
+          var y = mainChartCanvas.height - (v - mainChartMin) / (mainChartMax - mainChartMin) * mainChartCanvas.height;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        
+        // Fill under the line
+        ctx.lineTo(mainChartCanvas.width, mainChartCanvas.height);
+        ctx.lineTo(0, mainChartCanvas.height);
+        ctx.closePath();
+        ctx.fill();
+      }
+      
+      // Draw main chart initially (All GPUs)
+      drawMainChartUI();
+      
+      // Pill click handlers - switch main chart category
+      document.querySelectorAll('.pill').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          // Update active pill
+          document.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
+          this.classList.add('active');
+          // Update values and re-draw main chart based on clicked pill
+          var category = this.dataset.category;
+          if (category === 'gpus') {
+            mainChartValues = [100, 99, 97.35, 95.65];
+            mainChartMin = 95;
+            mainChartMax = 105;
+          } else if (category === 'cpus') {
+            mainChartValues = [100, 98, 96.04, 93.25];
+            mainChartMin = 92;
+            mainChartMax = 105;
+          } else if (category === 'ram') {
+            mainChartValues = [100, 99.5, 98.5, 97];
+            mainChartMin = 95;
+            mainChartMax = 105;
+          }
+          drawMainChartUI();
+          // Update pill text
+          this.textContent = this.dataset.category.replace(/gpus|cpus|ram/i, function(m) {
+            return 'All ' + m + ' 100.00 0.0%';
+          });
+        });
+      });
+      
+      // Time toggle handlers
+      document.querySelectorAll('.toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelector('.toggle.active').classList.remove('active');
+          this.classList.add('active');
+          loadIndexData(this.dataset.range);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

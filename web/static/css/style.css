@@ -228,3 +228,35 @@ h1 {
 .ctx-stroke-up { stroke: #00C805; }
 .ctx-stroke-down { stroke: #FF5000; }
 .gradient-fill { fill: rgba(0, 200, 5, 0.1); }
+
+/* Print stylesheet - forces dark theme when printing */
+@media print {
+  body {
+    background: #000000 !important;
+    color: #FFFFFF !important;
+  }
+  .header-bar {
+    background: #121212 !important;
+    border-color: #2D2D2D !important;
+  }
+  h1, .page-title, .page-subtitle {
+    color: #FFFFFF !important;
+  }
+  .model-name, .model-price, .model-change {
+    color: #FFFFFF !important;
+  }
+  .model-change {
+    color: #00C805 !important; /* green for price drop */
+  }
+  .ctx-stroke-up { stroke: #00C805 !important; }
+  .ctx-stroke-down { stroke: #FF5000 !important; }
+  .gradient-fill { fill: rgba(0, 200, 5, 0.1) !important; }
+  /* Ensure chart backgrounds are dark */
+  #main-chart {
+    background: #000000 !important;
+  }
+  /* Ensure text is visible */
+  * {
+    -webkit-print-color-adjust: !important;
+  }
+}

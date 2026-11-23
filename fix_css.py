@@ -1,0 +1,1 @@
+content = open('c:\\Users\\auzzi\\OneDrive\\Desktop\\price-tracker\\web/static/css/style.css').read()
