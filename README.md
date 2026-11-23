@@ -23,11 +23,11 @@ Long term goal: a credible public reference for hardware price inflation that a 
 
 ## Tech stack, chosen for the prototype
 
-- Python 3.12 on Windows, with a virtual environment
+- Python 3.13.5 on Windows, with a virtual environment
 - SQLite, one local database file, with `db/schema.sql` as the source of truth
-- Requests and BeautifulSoup for scrapers, one module per retailer, no headless browser in v1
+- Requests and BeautifulSoup for scrapers, plus Playwright headless for B&H, which works
 - FastAPI and Uvicorn for the local API, plain HTML, CSS, and JavaScript for the site, no build step and no Node
-- TradingView Lightweight Charts, Apache 2.0, loaded from CDN, for line and area time series charts
+- Plain canvas charts, no external library
 - Cline in VS Code, with Nemotron 3.5 Super VL first. See `AGENTS.md` and `.clinerules/` for how the coding agent works in this repo
 
 ## Quick start, Windows
@@ -101,10 +101,10 @@ price-tracker/
 
 Amazon, Newegg, Micro Center, Best Buy, and B and H. Amazon blocks scrapers aggressively, so v1 must still work if Amazon is dropped. See `RETAILER_FEASIBILITY.md` and `config/retailers.yaml`.
 
-## License and hosting, still open
+## License and hosting
 
-License is permissive, MIT or Apache 2.0, final pick pending during prototyping. Hosting is Azure for Students, terms to verify once it is needed. Do not add a license file or deploy anything until those two are decided in `DECISIONS.md`.
+License is MIT, see LICENSE file. Hosting is Azure for Students, terms to verify.
 
 ## Status
 
-Pre draft planning is done. The final plan, the agent instructions, and the starter tasks are in this repo. Prototyping starts at Task 1 in `TASKS.md`.
+Tasks 1 to 15 complete, front page verified live at http://127.0.0.1:8000 with All CPUs 100.00, All GPUs 100.00, All RAM 100.00, dark Robinhood theme, TradingView layout in progress.
