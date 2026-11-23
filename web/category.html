@@ -3,75 +3,202 @@
 <head>
   <meta charset="utf-8">
   <title>Category - Price Tracker</title>
-  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<div class="header-bar">
-  <h1>Price Tracker</h1>
-  <nav>
-    <a href="/" class="active">Home</a>
-    <a href="/category/gpus">GPUs</a>
-    <a href="/category/cpus">CPUs</a>
-    <a href="/category/ram">RAM</a>
-    <a href="/methodology">Methodology</a>
-  </nav>
-</div>
+  <header class="header-bar">
+    <a class="header-logo" href="/">Price Tracker</a>
+    <nav class="header-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a class="category-nav-gpus" href="/gpus">GPUs</a>
+      <a class="category-nav-cpus" href="/cpus">CPUs</a>
+      <a class="category-nav-ram" href="/ram">RAM</a>
+      <a href="/methodology">Methodology</a>
+    </nav>
+  </header>
 
-<div class="header-bar">
-  <h1>Price Tracker</h1>
-  <nav>
-    <a href="/" class="active">Home</a>
-    <a href="/category/gpus">GPUs</a>
-    <a href="/category/cpus">CPUs</a>
-    <a href="/category/ram">RAM</a>
-    <a href="/methodology">Methodology</a>
-  </nav>
-</div>
+  <main class="category-page">
+    <section class="category-heading">
+      <h1 id="category-title">Category: CPUs</h1>
+      <p id="category-subtitle">Mock price trends for 3 tracked GPU models.</p>
+      <p class="mock-label">Data is mock for demonstration purposes.</p>
+    </section>
 
-  <h1>Category: CPUs</h1>
+    <section class="trend-section category-trend">
+      <h2 class="trend-title">Trend</h2>
+      <p class="trend-subtitle">Price change vs the start of the selected period.</p>
+      <canvas id="category-chart" width="1000" height="300"></canvas>
+    </section>
+    <div class="time-toggles">
+      <button class="toggle" data-range="1d">1D</button>
+      <button class="toggle" data-range="1w">1W</button>
+      <button class="toggle active" data-range="1m">1M</button>
+      <button class="toggle" data-range="1y">1Y</button>
+      <button class="toggle" data-range="all">All</button>
+    </div>
+    <p class="price-label">Green means cheaper, red means more expensive.</p>
 
-  <!-- Index value and percent change -->
-  <div class="index-header">
-    <div class="index-value" id="index-value">100.0</div>
-    <div class="index-percent" id="index-percent">0.0%</div>
-  </div>
+    <section class="individual-models">
+      <h3 class="section-header">Models</h3>
+      <div class="model-list" id="category-model-list"></div>
+    </section>
+  </main>
 
-  <!-- Index chart -->
-  <div class="chart-container">
-    <div id="index-chart"></div>
-  </div>
-
-  <!-- Product list -->
-  <div class="product-list">
-    <h3>Tracked Products</h3>
-    <ul>
-      <li>
-        <a href="/product/amd-ryzen-7-9800x3d" target="_blank">
-          AMD Ryzen 7 9800X3D
-        </a>
-        <span class="price">$469.99</span>
-      </li>
-    </ul>
-    <p class="no-data">No other products tracked in this category.</p>
-  </div>
-
-  <!-- Chart component: TradingView Lightweight Charts -->
-  <script src="static/js/chart.js"></script>
-
+  <script src="/static/js/mock-data.js"></script>
   <script>
-    // Initialize index chart for category page
-    initIndexChart('index-chart', 'CPUs', ['1D', '1W', '1M', '1Y']);
+    var params = new URLSearchParams(window.location.search);
+    var pathCategory = window.location.pathname === '/gpus' ? 'GPUs'
+      : window.location.pathname === '/cpus' ? 'CPUs'
+      : window.location.pathname === '/ram' ? 'RAM'
+      : null;
+    var categoryName = params.get('cat') || params.get('category') || pathCategory || 'CPUs';
+    if (!['GPUs', 'CPUs', 'RAM'].includes(categoryName)) categoryName = 'CPUs';
+    var selectedRange = '1m';
 
-    // Load category data from API and populate page
-    loadCategoryData();
+    document.querySelector('.category-nav-' + categoryName.toLowerCase()).classList.add('active');
+    document.getElementById('category-title').textContent = 'Category: ' + categoryName;
+    document.getElementById('category-subtitle').textContent =
+      'Mock price trends for 3 tracked ' + (categoryName === 'RAM' ? 'RAM' : categoryName) + ' models.';
 
-    // Toggle handlers for chart time ranges
-    document.querySelectorAll('.toggle').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        document.querySelector('.toggle.active').classList.remove('active');
-        this.classList.add('active');
-        updateIndexChart('index-chart', this.dataset.range);
+    var products = window.mockCatalog.getByCategory(categoryName);
+
+    function getCategoryHistory(range) {
+      var length = products[0].histories[range].length;
+      var result = [];
+      for (var i = 0; i < length; i++) {
+        var sum = 0;
+        products.forEach(function(product) { sum += product.histories[range][i]; });
+        result.push(Math.round(sum / products.length * 100) / 100);
+      }
+      return result;
+    }
+
+    function drawCategoryChart() {
+      var canvas = document.getElementById('category-chart');
+      var ctx = canvas.getContext('2d');
+      var dpr = window.devicePixelRatio || 1;
+      var width = Math.max(1, canvas.clientWidth || canvas.offsetWidth);
+      var height = 300;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
+
+      var values = getCategoryHistory(selectedRange);
+      var min = Math.min.apply(null, values);
+      var max = Math.max.apply(null, values);
+      var padding = (max - min || Math.abs(max) * 0.1) * 0.05;
+      var chartMin = min - padding;
+      var chartMax = max + padding;
+      var plotWidth = width - 72;
+      var plotHeight = height - 44;
+      var start = values[0];
+
+      function x(index) { return index / (values.length - 1) * plotWidth; }
+      function y(value) { return 12 + (chartMax - value) / (chartMax - chartMin) * plotHeight; }
+
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (var i = 0; i < values.length - 1; i++) {
+        var endCents = Math.round(values[i + 1] * 100);
+        var startCents = Math.round(start * 100);
+        ctx.beginPath();
+        ctx.moveTo(x(i), y(values[i]));
+        ctx.lineTo(x(i + 1), y(values[i + 1]));
+        ctx.strokeStyle = endCents > startCents ? '#FF5000' : endCents < startCents ? '#00C805' : '#9CA3AF';
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('$' + chartMax.toFixed(2), width - 62, y(chartMax));
+      ctx.fillText('$' + ((chartMin + chartMax) / 2).toFixed(2), width - 62, height / 2);
+      ctx.fillText('$' + chartMin.toFixed(2), width - 62, y(chartMin));
+
+      var labels = selectedRange === '1d'
+        ? ['9 AM', '12 PM', '3 PM', '6 PM']
+        : selectedRange === '1w'
+          ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+          : selectedRange === '1m'
+            ? ['Nov 1', 'Nov 8', 'Nov 15', 'Nov 22']
+            : ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov'];
+      ctx.font = '11px Arial';
+      ctx.textBaseline = 'middle';
+      labels.forEach(function(label, index) {
+        var point = labels.length === 1 ? 0 : index / (labels.length - 1) * (values.length - 1);
+        ctx.textAlign = index === 0 ? 'left' : index === labels.length - 1 ? 'right' : 'center';
+        ctx.fillText(label, x(point), height - 12);
       });
+    }
+
+    var list = document.getElementById('category-model-list');
+    products.forEach(function(product) {
+      var row = document.createElement('div');
+      row.className = 'model-row';
+      row.innerHTML =
+        '<a class="model-name" href="/product/' + product.id + '">' + product.name + '</a>' +
+        '<span class="model-price">$' + product.price.toFixed(2) + '</span>' +
+        '<span class="model-change ' + (product.change >= 0 ? 'change-positive' : 'change-negative') + '">' +
+        (product.change >= 0 ? '+' : '') + product.change.toFixed(1) + '%</span>' +
+        '<div class="model-sparkline"><canvas data-model="' + product.id + '" width="80" height="30"></canvas></div>';
+      list.appendChild(row);
+    });
+
+    function drawSparklines() {
+      document.querySelectorAll('.model-sparkline canvas').forEach(function(canvas) {
+        var product = window.mockCatalog.getById(canvas.dataset.model);
+        var values = product.histories[selectedRange];
+        var width = 80;
+        var height = 30;
+        var dpr = window.devicePixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        var ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = '#121212';
+        ctx.fillRect(0, 0, width, height);
+        var min = Math.min.apply(null, values);
+        var max = Math.max.apply(null, values);
+        var range = max - min || Math.abs(max) * 0.1;
+        var chartMin = min - range * 0.05;
+        var chartMax = max + range * 0.05;
+        var start = Math.round(values[0] * 100);
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        for (var i = 0; i < values.length - 1; i++) {
+          var x1 = i / (values.length - 1) * width;
+          var x2 = (i + 1) / (values.length - 1) * width;
+          var y1 = 2 + (chartMax - values[i]) / (chartMax - chartMin) * 26;
+          var y2 = 2 + (chartMax - values[i + 1]) / (chartMax - chartMin) * 26;
+          var end = Math.round(values[i + 1] * 100);
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = end > start ? '#FF5000' : end < start ? '#00C805' : '#9CA3AF';
+          ctx.stroke();
+        }
+      });
+    }
+
+    document.querySelectorAll('.time-toggles .toggle').forEach(function(button) {
+      button.addEventListener('click', function() {
+        document.querySelector('.time-toggles .toggle.active').classList.remove('active');
+        button.classList.add('active');
+        selectedRange = button.dataset.range;
+        drawCategoryChart();
+        drawSparklines();
+      });
+    });
+
+    drawCategoryChart();
+    drawSparklines();
+    window.addEventListener('resize', function() {
+      drawCategoryChart();
+      drawSparklines();
     });
   </script>
 </body>

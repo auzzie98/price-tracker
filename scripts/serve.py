@@ -9,6 +9,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
+WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
+DB_PATH = Path(__file__).resolve().parents[1] / "data" / "price-tracker.db"
+
+
+def page_response(relative_path):
+    response = FileResponse(WEB_ROOT / relative_path)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    return response
+
 app = FastAPI()
 
 @app.get("/api/health")
@@ -19,7 +29,7 @@ def health():
 def api_indexes():
     from price_tracker.db import connect
     import sqlite3
-    db_path = "data/price-tracker.db"
+    db_path = str(DB_PATH)
     conn = sqlite3.connect(db_path)
     rows = conn.execute("SELECT category, period, index_value, skus_used FROM index_values").fetchall()
     conn.close()
@@ -36,7 +46,7 @@ def api_indexes():
 def api_indexes_category(category: str):
     from price_tracker.db import connect
     import sqlite3
-    db_path = "data/price-tracker.db"
+    db_path = str(DB_PATH)
     conn = sqlite3.connect(db_path)
     rows = conn.execute("SELECT period, index_value, skus_used FROM index_values WHERE category = ? ORDER BY period", (category,)).fetchall()
     conn.close()
@@ -51,9 +61,9 @@ def api_indexes_category(category: str):
 def api_products():
     from price_tracker.db import connect
     import sqlite3
-    db_path = "data/price-tracker.db"
+    db_path = str(DB_PATH)
     conn = sqlite3.connect(db_path)
-    rows = conn.execute("SELECT id, median_price_cents, retailers_used FROM sku_prices").fetchall()
+    rows = conn.execute("SELECT sku_id, median_price_cents, retailers_used FROM sku_prices").fetchall()
     conn.close()
     products = []
     for sku_id, median_price_cents, retailers_used in rows:
@@ -64,7 +74,7 @@ def api_products():
 def api_product(sku: str):
     from price_tracker.db import connect
     import sqlite3
-    db_path = "data/price-tracker.db"
+    db_path = str(DB_PATH)
     conn = sqlite3.connect(db_path)
     rows = conn.execute("SELECT period, median_price_cents FROM sku_prices WHERE sku_id = ? ORDER BY period", (sku,)).fetchall()
     conn.close()
@@ -77,7 +87,7 @@ def api_product(sku: str):
 def api_movers():
     from price_tracker.db import connect
     import sqlite3
-    db_path = "data/price-tracker.db"
+    db_path = str(DB_PATH)
     conn = sqlite3.connect(db_path)
     rows = conn.execute("SELECT sku_id, period, median_price_cents FROM sku_prices ORDER BY period DESC LIMIT 10").fetchall()
     conn.close()
@@ -88,23 +98,43 @@ def api_movers():
 
 @app.get("/", include_in_schema=False)
 def index_page():
-    return FileResponse("web/index.html")
+    return page_response("index.html")
 
 @app.get("/index.html", include_in_schema=False)
 def index_html():
-    return FileResponse("web/index.html")
+    return page_response("index.html")
 
 @app.get("/category", include_in_schema=False)
 def category_page():
-    return FileResponse("web/category.html")
+    return page_response("category.html")
+
+@app.get("/gpus", include_in_schema=False)
+def gpus_page():
+    return page_response("category.html")
+
+@app.get("/cpus", include_in_schema=False)
+def cpus_page():
+    return page_response("category.html")
+
+@app.get("/ram", include_in_schema=False)
+def ram_page():
+    return page_response("category.html")
+
+@app.get("/methodology", include_in_schema=False)
+@app.get("/methodology.html", include_in_schema=False)
+def methodology_page():
+    return page_response("methodology.html")
 
 @app.get("/product/{sku}", include_in_schema=False)
 def product_page(sku: str):
-    return FileResponse("web/product.html")
+    return page_response("product.html")
 
 @app.get("/static/{path:path}", include_in_schema=False)
 def static_files(path: str):
-    return FileResponse("web/static/" + path)
+    response = FileResponse(WEB_ROOT / "static" / path)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    return response
 
 if __name__ == "__main__":
     import os

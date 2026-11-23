@@ -1,76 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Product - Price Tracker</title>
-<link rel="stylesheet" href="static/css/style.css">
+  <meta charset="utf-8">
+  <title>Product - Price Tracker</title>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<div class="header-bar">
-  <h1>Price Tracker</h1>
-  <nav>
-    <a href="/" class="active">Home</a>
-    <a href="/category/gpus">GPUs</a>
-    <a href="/category/cpus">CPUs</a>
-    <a href="/category/ram">RAM</a>
-    <a href="/methodology">Methodology</a>
-  </nav>
-</div>
+  <header class="header-bar">
+    <a class="header-logo" href="/">Price Tracker</a>
+    <nav class="header-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/gpus">GPUs</a>
+      <a href="/cpus">CPUs</a>
+      <a href="/ram">RAM</a>
+      <a href="/methodology">Methodology</a>
+    </nav>
+  </header>
 
-<div class="header-bar">
-  <h1>Price Tracker</h1>
-  <nav>
-    <a href="/" class="active">Home</a>
-    <a href="/category/gpus">GPUs</a>
-    <a href="/category/cpus">CPUs</a>
-    <a href="/category/ram">RAM</a>
-    <a href="/methodology">Methodology</a>
-  </nav>
-</div>
+  <main class="product-page">
+    <section class="product-heading">
+      <h1 id="product-title">Product</h1>
+      <p id="product-meta"></p>
+      <p class="mock-label">Data is mock for demonstration purposes.</p>
+    </section>
 
-<h1>AMD Ryzen 7 9800X3D</h1>
+    <section class="trend-section product-trend">
+      <h2 class="trend-title">Trend</h2>
+      <p class="trend-subtitle">Price change vs the start of the selected period.</p>
+      <canvas id="product-chart" width="1000" height="300"></canvas>
+    </section>
+    <div class="time-toggles">
+      <button class="toggle" data-range="1d">1D</button>
+      <button class="toggle" data-range="1w">1W</button>
+      <button class="toggle active" data-range="1m">1M</button>
+      <button class="toggle" data-range="1y">1Y</button>
+      <button class="toggle" data-range="all">All</button>
+    </div>
 
-<div class="price-container">
-  <div class="price-value">
-    $469.99
-  </div>
-  <div class="price-change">
-    Median of 3 observations
-  </div>
-</div>
+    <section class="retailer-section">
+      <h3 class="section-header">Retailers</h3>
+      <table class="retailer-table">
+        <thead>
+          <tr><th>Retailer</th><th>Price</th><th>In stock</th><th>Link</th></tr>
+        </thead>
+        <tbody id="retailer-rows"></tbody>
+      </table>
+    </section>
+  </main>
 
-<div class="chart-container">
-  <div id="price-chart"></div>
-</div>
+  <script src="/static/js/mock-data.js"></script>
+  <script>
+    var pathParts = window.location.pathname.split('/').filter(Boolean);
+    var productId = pathParts[pathParts.length - 1] || 'asus-dual-rtx5070-12g';
+    var product = window.mockCatalog.getById(productId) || window.mockCatalog.products[0];
+    var selectedRange = '1m';
 
-<div class="retailer-sources">
-  <h3>Price sources:</h3>
-  <ul>
-    <li>
-      <strong>Best Buy</strong>
-      <a href="https://www.bestbuy.com/product/amd-ryzen-7-9800x3d-8-core-16-thread-4-7-ghz-5-2-ghz-max-boost-socket-am5-pci-express-5-0-unlocked-desktop-processor-silver/JXKQHH5XSR" target="_blank">View at Best Buy</a>
-      <br>
-      $479.00 (in stock)
-    </li>
-    <li>
-      <strong>B and H</strong>
-      <a href="https://www.bhphotovideo.com/c/product/1859346-REG/amd_100_100001084wof_ryzen_7_9800x3d_am5.html" target="_blank">View at B and H</a>
-      <br>
-      $419.00 (in stock)
-    </li>
-    <li>
-      <strong>Newegg</strong>
-      <a href="https://www.newegg.com/amd-ryzen-7-9000-series-ryzen-7-9800x3d-granite-ridge-zen-5-socket-am5-desktop-cpu-processor/p/N82E16819113877T" target="_blank">View at Newegg</a>
-      <br>
-      $469.99 (in stock)
-    </li>
-  </ul>
-</div>
+    document.title = product.name + ' - Price Tracker';
+    document.getElementById('product-title').textContent = product.name;
+    document.getElementById('product-meta').textContent =
+      'MPN ' + product.mpn + ' | ' + product.category + ' | Retailers used: ' + product.retailers.length;
 
-<script src="static/js/chart.js"></script>
-<script>
-  // Initialize the chart with the product's price data
-  initProductChart('amd-ryzen-7-9800x3d', 469.99);
-</script>
+    function drawProductChart() {
+      var canvas = document.getElementById('product-chart');
+      var ctx = canvas.getContext('2d');
+      var dpr = window.devicePixelRatio || 1;
+      var width = Math.max(1, canvas.clientWidth || canvas.offsetWidth);
+      var height = 300;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
+
+      var values = product.histories[selectedRange];
+      var min = Math.min.apply(null, values);
+      var max = Math.max.apply(null, values);
+      var padding = (max - min || Math.abs(max) * 0.1) * 0.05;
+      var chartMin = min - padding;
+      var chartMax = max + padding;
+      var plotWidth = width - 72;
+      var plotHeight = height - 44;
+      var start = values[0];
+
+      function x(index) { return index / (values.length - 1) * plotWidth; }
+      function y(value) { return 12 + (chartMax - value) / (chartMax - chartMin) * plotHeight; }
+
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (var i = 0; i < values.length - 1; i++) {
+        var endCents = Math.round(values[i + 1] * 100);
+        var startCents = Math.round(start * 100);
+        ctx.beginPath();
+        ctx.moveTo(x(i), y(values[i]));
+        ctx.lineTo(x(i + 1), y(values[i + 1]));
+        ctx.strokeStyle = endCents > startCents ? '#FF5000' : endCents < startCents ? '#00C805' : '#9CA3AF';
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('$' + chartMax.toFixed(2), width - 62, y(chartMax));
+      ctx.fillText('$' + ((chartMin + chartMax) / 2).toFixed(2), width - 62, height / 2);
+      ctx.fillText('$' + chartMin.toFixed(2), width - 62, y(chartMin));
+
+      var labels = selectedRange === '1d'
+        ? ['9 AM', '12 PM', '3 PM', '6 PM']
+        : selectedRange === '1w'
+          ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+          : selectedRange === '1m'
+            ? ['Nov 1', 'Nov 8', 'Nov 15', 'Nov 22']
+            : ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov'];
+      ctx.font = '11px Arial';
+      ctx.textBaseline = 'middle';
+      labels.forEach(function(label, index) {
+        var point = labels.length === 1 ? 0 : index / (labels.length - 1) * (values.length - 1);
+        ctx.textAlign = index === 0 ? 'left' : index === labels.length - 1 ? 'right' : 'center';
+        ctx.fillText(label, x(point), height - 12);
+      });
+    }
+
+    var retailerRows = document.getElementById('retailer-rows');
+    product.retailers.forEach(function(retailer, index) {
+      var row = document.createElement('tr');
+      var price = product.price + ((index % 3) - 1) * 5;
+      row.innerHTML =
+        '<td>' + retailer + '</td>' +
+        '<td>$' + price.toFixed(2) + '</td>' +
+        '<td><span class="stock-yes">In stock</span></td>' +
+        '<td><a href="#" onclick="return false;">View retailer</a></td>';
+      retailerRows.appendChild(row);
+    });
+
+    document.querySelectorAll('.time-toggles .toggle').forEach(function(button) {
+      button.addEventListener('click', function() {
+        document.querySelector('.time-toggles .toggle.active').classList.remove('active');
+        button.classList.add('active');
+        selectedRange = button.dataset.range;
+        drawProductChart();
+      });
+    });
+
+    drawProductChart();
+    window.addEventListener('resize', drawProductChart);
+  </script>
 </body>
 </html>
