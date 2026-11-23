@@ -1,0 +1,47 @@
+# Hand picked starting list, v1 prototype.
+# One entry per SKU, matched by manufacturer part number (MPN).
+# Add a product only with its MPN and its exact page URL at each retailer that lists it.
+# Start with 3 products for the prototype, one per retailer test in Task 5 to Task 7,
+# then expand to the full list in Task 11. Do not add 50 products at once.
+# Prices below are examples from the planning doc only, not live prices. Do not treat them as data.
+
+products:
+  - id: asus-dual-rtx5070-12g
+    mpn: "DUAL-RTX5070-12G"
+    brand: "ASUS"
+    model: "Dual RTX 5070 12GB"
+    category: "GPUs"
+    chip: "RTX 5070"
+    architecture: "Blackwell"
+    urls:
+      newegg: "https://www.newegg.com/asus-dual-tuf-rtx5070-12g-gaming-geforce-rtx-5070-12gb-video-cards-double-fans/p/1FT-000Y-00CS0"
+      bestbuy: "NOT FOUND, no exact DUAL-RTX5070-12G listing found, only PRIME and TUF OC versions"
+      microcenter: "https://www.microcenter.com/product/704211/asus-nvidia-geforce-rtx-5070-dual-fan-12gb-gddr7-pcie-50-graphics-card"
+      bh: "NOT FOUND, no exact DUAL-RTX5070-12G listing found"
+      amazon: "NOT FOUND as retailer sold, only third party listings and the OC version DUAL-RTX5070-O12G"
+  - id: amd-ryzen-7-9800x3d
+    mpn: "100-100001084WOF"
+    brand: "AMD"
+    model: "Ryzen 7 9800X3D"
+    category: "CPUs"
+    chip: "Ryzen 7 9800X3D"
+    architecture: "Zen 5"
+    urls:
+      newegg: "https://www.newegg.com/amd-ryzen-7-9000-series-ryzen-7-9800x3d-granite-ridge-zen-5-socket-am5-desktop-cpu-processor/p/N82E16819113877T"
+      bestbuy: "https://www.bestbuy.com/product/amd-ryzen-7-9800x3d-8-core-16-thread-4-7-ghz-5-2-ghz-max-boost-socket-am5-pci-express-5-0-unlocked-desktop-processor-silver/JXKQHH5XSR"
+      microcenter: "https://www.microcenter.com/quickView/687907/amd-ryzen-7-9800x3d-granite-ridge-am5-470ghz-8-core-boxed-processor-heatsink-not-included"
+      bh: "https://www.bhphotovideo.com/c/product/1859346-REG/amd_100_100001084wof_ryzen_7_9800x3d_am5.html"
+      amazon: "https://www.amazon.com/dp/B0DKFMSMYK"
+  - id: corsair-vengeance-32gb-ddr5-6000-cl30
+    mpn: "CMK32GX5M2B6000Z30"
+    brand: "CORSAIR"
+    model: "Vengeance 32GB DDR5-6000 CL30"
+    category: "RAM"
+    chip: "DDR5-6000 CL30"
+    architecture: "DDR5"
+    urls:
+      newegg: "https://www.newegg.com/corsair-vengeance-32gb-ddr5-6000-cas-latency-cl30-desktop-memory-gray/p/N82E16820982040"
+      bestbuy: "https://www.bestbuy.com/product/corsair-vengeance-32gb-2-x-16gb-288-pin-pc-ram-ddr5-6000-pc5-48000-desktop-memory-model-cmk32gx5m2b6000z30-gray/J39QHTCC8W/sku/11244686"
+      microcenter: "NOT FOUND, no exact CMK32GX5M2B6000Z30 listing found"
+      bh: "https://www.bhphotovideo.com/c/product/2008660-REG/corsair_cmk32gx5m2b6000z30_vengence_ddr5_32gb_2x16gb_ddr5_6000.html"
+      amazon: "https://www.amazon.com/dp/B0CBRJ63RT"

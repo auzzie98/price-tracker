@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.env
+*.egg-info/
+
+# Data, local only, never commit
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/*.csv
+
+# Secrets, never commit
+*.key
+*.pem
+config/secrets.yaml
+config/*secret*
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

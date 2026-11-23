@@ -1,0 +1,12 @@
+# Price Tracker settings, prototype defaults.
+# Change a value here, not in code. Record a change in DECISIONS.md if it changes scope.
+
+refresh_hours: 6
+period: day
+request_delay_seconds: 2
+user_agent: "Price-Tracker-Prototype/0.1 (open source price research, contact to be added before public launch)"
+database_path: "data/price-tracker.db"
+api_host: "127.0.0.1"
+api_port: 8000
+chart_library: "lightweight-charts"
+chart_library_source: "cdn"

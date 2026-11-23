@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Product - Price Tracker</title>
+<link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+<h1>AMD Ryzen 7 9800X3D</h1>
+
+<div class="price-container">
+  <div class="price-value">
+    $469.99
+  </div>
+  <div class="price-change">
+    Median of 3 observations
+  </div>
+</div>
+
+<div class="chart-container">
+  <div id="price-chart"></div>
+</div>
+
+<div class="retailer-sources">
+  <h3>Price sources:</h3>
+  <ul>
+    <li>
+      <strong>Best Buy</strong>
+      <a href="https://www.bestbuy.com/product/amd-ryzen-7-9800x3d-8-core-16-thread-4-7-ghz-5-2-ghz-max-boost-socket-am5-pci-express-5-0-unlocked-desktop-processor-silver/JXKQHH5XSR" target="_blank">View at Best Buy</a>
+      <br>
+      $479.00 (in stock)
+    </li>
+    <li>
+      <strong>B and H</strong>
+      <a href="https://www.bhphotovideo.com/c/product/1859346-REG/amd_100_100001084wof_ryzen_7_9800x3d_am5.html" target="_blank">View at B and H</a>
+      <br>
+      $419.00 (in stock)
+    </li>
+    <li>
+      <strong>Newegg</strong>
+      <a href="https://www.newegg.com/amd-ryzen-7-9000-series-ryzen-7-9800x3d-granite-ridge-zen-5-socket-am5-desktop-cpu-processor/p/N82E16819113877T" target="_blank">View at Newegg</a>
+      <br>
+      $469.99 (in stock)
+    </li>
+  </ul>
+</div>
+
+<script src="static/js/chart.js"></script>
+<script>
+  // Initialize the chart with the product's price data
+  initProductChart('amd-ryzen-7-9800x3d', 469.99);
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Price Tracker, prototype dependencies.
+# Pinned at install time in Task 1 (verified with pip show / pip list).
+# Keep the list small. Do not add a package without a reason in DECISIONS.md.
+requests==2.34.2
+beautifulsoup4==4.15.0
+PyYAML==6.0.4
+fastapi==0.165.0
+uvicorn==0.54.0

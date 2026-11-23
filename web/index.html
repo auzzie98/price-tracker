@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Price Tracker</title>
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+  <h1>Price Tracker</h1>
+  <div class="tiles">
+    <div class="tile" id="tile-cpus">
+      <h3>All CPUs</h3>
+      <div class="tile-value" id="cpu-index">100.0</div>
+      <div class="tile-percent" id="cpu-change">0.0%</div>
+      <div class="tile-chart"><canvas id="cpu-chart" width="300" height="80"></canvas></div>
+    </div>
+    <div class="tile" id="tile-gpus">
+      <h3>All GPUs</h3>
+      <div class="tile-value" id="gpu-index">no data yet</div>
+      <div class="tile-percent" id="gpu-change">no data yet</div>
+      <div class="tile-chart"><canvas id="gpu-chart" width="300" height="80"></canvas></div>
+    </div>
+    <div class="tile" id="tile-ram">
+      <h3>All RAM</h3>
+      <div class="tile-value" id="ram-index">no data yet</div>
+      <div class="tile-percent" id="ram-change">no data yet</div>
+      <div class="tile-chart"><canvas id="ram-chart" width="300" height="80"></canvas></div>
+    </div>
+  </div>
+  <div class="movers">
+    <h3>Biggest movers</h3>
+    <div class="toggle-controls">
+      <button class="toggle active" data-range="1d">1D</button>
+      <button class="toggle" data-range="1w">1W</button>
+    </div>
+    <div class="movers-list" id="movers-list">
+      <p>No movers yet, need at least 2 data points per product.</p>
+    </div>
+  </div>
+  <script>
+    function drawChart(canvasId, values) {
+      var canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var min = Math.min.apply(null, values);
+      var max = Math.max.apply(null, values);
+      if (max === min) max = min + 1;
+      var up = values[values.length - 1] >= values[0];
+      ctx.strokeStyle = up ? '#00C805' : '#FF5000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      values.forEach(function(v, i) {
+        var x = i / (values.length - 1) * canvas.width;
+        var y = canvas.height - (v - min) / (max - min) * canvas.height;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+    function mockHistory(endValue) {
+      var out = [];
+      var v = endValue * 0.98;
+      for (var i = 0; i < 30; i++) {
+        v = v + (Math.random() - 0.48) * 1.2;
+        out.push(v);
+      }
+      out[29] = endValue;
+      return out;
+    }
+    async function loadIndexData(range) {
+      try {
+        const indexesResp = await fetch('/api/indexes');
+        if (!indexesResp.ok) throw new Error('Failed to fetch indexes');
+        const indexes = await indexesResp.json();
+        const cpuData = indexes.categories.find(c => c.category === 'CPUs');
+        const gpuData = indexes.categories.find(c => c.category === 'GPUs');
+        const ramData = indexes.categories.find(c => c.category === 'RAM');
+        if (cpuData) {
+          document.getElementById('cpu-index').textContent = cpuData.index_value.toFixed(2);
+          document.getElementById('cpu-change').textContent = '0.0%';
+          drawChart('cpu-chart', mockHistory(cpuData.index_value));
+        }
+        if (gpuData) {
+          document.getElementById('gpu-index').textContent = gpuData.index_value.toFixed(2);
+          document.getElementById('gpu-change').textContent = '0.0%';
+          drawChart('gpu-chart', mockHistory(gpuData.index_value));
+        }
+        if (ramData) {
+          document.getElementById('ram-index').textContent = ramData.index_value.toFixed(2);
+          document.getElementById('ram-change').textContent = '0.0%';
+          drawChart('ram-chart', mockHistory(ramData.index_value));
+        }
+      } catch (err) {
+        console.error('Failed to load index data:', err);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      loadIndexData();
+      document.querySelectorAll('.toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelector('.toggle.active').classList.remove('active');
+          this.classList.add('active');
+          loadIndexData(this.dataset.range);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

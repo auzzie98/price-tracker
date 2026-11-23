@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Price Tracker</title>
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+  <h1>Price Tracker</h1>
+
+  <!-- Index tiles -->
+  <div class="tiles">
+    <div class="tile" id="tile-cpus">
+      <h3>All CPUs</h3>
+      <div class="tile-value" id="cpu-index">100.0</div>
+      <div class="tile-percent" id="cpu-change">0.0%</div>
+      <div class="tile-chart">
+        <canvas id="cpu-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="tile" id="tile-gpus">
+      <h3>All GPUs</h3>
+      <div class="tile-value" id="gpu-index">no data yet</div>
+      <div class="tile-percent" id="gpu-change">no data yet</div>
+      <div class="tile-chart">
+        <canvas id="gpu-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="tile" id="tile-ram">
+      <h3>All RAM</h3>
+      <div class="tile-value" id="ram-index">no data yet</div>
+      <div class="tile-percent" id="ram-change">no data yet</div>
+      <div class="tile-chart">
+        <canvas id="ram-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Biggest movers -->
+  <div class="movers">
+    <h3>Biggest movers</h3>
+    <div class="toggle-controls">
+      <button class="toggle active" data-range="1d">1D</button>
+      <button class="toggle" data-range="1w">1W</button>
+    </div>
+    <div class="movers-list" id="movers-list">
+      <p>No movers yet, need at least 2 data points per product.</p>
+    </div>
+  </div>
+
+  <script>
+    function initIndexChart(chartId, chartName, range) {}
+
+    function updateIndexChart(chartId, dataPoints) {}
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initIndexChart('cpu-chart', 'CPUs', '1D');
+      initIndexChart('gpu-chart', 'GPUs', '1D');
+      initIndexChart('ram-chart', 'RAM', '1D');
+      loadIndexData();
+      document.querySelectorAll('.toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelector('.toggle.active').classList.remove('active');
+          this.classList.add('active');
+          loadIndexData(this.dataset.range);
+        });
+      });
+    });
+
+    async function loadIndexData(range) {
+      try {
+        const indexesResp = await fetch('/api/indexes');
+        if (!indexesResp.ok) throw new Error('Failed to fetch indexes');
+        const indexes = await indexesResp.json();
+        const cpuData = indexes.categories.find(c => c.category === 'CPUs');
+        const gpuData = indexes.categories.find(c => c.category === 'GPUs');
+        const ramData = indexes.categories.find(c => c.category === 'RAM');
+        if (cpuData) {
+          document.getElementById('cpu-index').textContent = cpuData.index_value.toFixed(2);
+          document.getElementById('cpu-change').textContent = '0.0%';
+          updateIndexChart('cpu-chart', [{period: '1D', index_value: cpuData.index_value}]);
+        }
+        if (gpuData) {
+          document.getElementById('gpu-index').textContent = gpuData.index_value.toFixed(2);
+          document.getElementById('gpu-change').textContent = '0.0%';
+          updateIndexChart('gpu-chart', [{period: '1D', index_value: gpuData.index_value}]);
+        }
+        if (ramData) {
+          document.getElementById('ram-index').textContent = ramData.index_value.toFixed(2);
+          document.getElementById('ram-change').textContent = '0.0%';
+          updateIndexChart('ram-chart', [{period: '1D', index_value: ramData.index_value}]);
+        }
+      } catch (err) {
+        console.error('Failed to load index data:', err);
+      }
+    }
+  </script>
+</body>
+</html>
+

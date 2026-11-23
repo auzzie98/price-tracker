@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Methodology - Price Tracker</title>
+<link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+<h1>Methodology</h1>
+
+<h2>How prices are tracked</h2>
+<p>One observation is one scraped data point: timestamp, SKU, retailer, price, in-stock flag, and source URL. Prices are stored in cents as an integer in the database. Display shows dollars on the site.</p>
+
+<h2>Median price per SKU</h2>
+<p>For each SKU and period, the median price is calculated across all in-stock retailers. Out-of-stock listings are ignored for the median calculation. If a SKU has no in-stock price in a period, it has no sku_prices row for that period — a zero price is never written.</p>
+
+<h2>Index calculation</h2>
+<p>The index uses a chained, equal weighted, matched model, starting at 100. The model works as follows:</p>
+<ul>
+<li>Each period, only SKUs priced in both the current period and the previous period are used (matched model).</li>
+<li>For each common SKU, the price relative is calculated as current price divided by previous price.</li>
+<li>The average of all price relatives gives the period's adjustment factor.</li>
+<li>The index is chained: each period's index value is the previous period's index multiplied by the average relative, rounded to 2 decimal places.</li>
+<li>A new SKU is left out of the index until it has its own history. It counts from its second period, through its own change only.</li>
+</ul>
+
+<h2>Worked example (Days 1 to 4)</h2>
+<table>
+<tr><th>Day</th><th>Index</th><th>SKUs used</th></tr>
+<tr><td>Day 1</td><td>100.00</td><td>3</td></tr>
+<tr><td>Day 2</td><td>99.00</td><td>3</td></tr>
+<tr><td>Day 3</td><td>97.35</td><td>3</td></tr>
+<tr><td>Day 4</td><td>95.65</td><td>4</td></tr>
+</table>
+<p>SKU D is new on Day 3 (skipped), counts on Day 4.</p>
+
+<h2>Out-of-stock rule</h2>
+<p>If a SKU has no in-stock observation for 7 consecutive days, it leaves the basket (no sku_prices row, no index contribution). When the SKU returns with an in-stock price, it re-enters from its second period after return, following the matched model rule. This prevents a single out-of-stock period from permanently removing a SKU while also preventing stale out-of-stock data from driving the index indefinitely.</p>
+
+<h2>Cold start</h2>
+<p>Charts begin at launch and history accumulates from day one. There is no backfill in v1. The first data point starts the history; subsequent periods add to it.</p>
+
+<h2>Revision rule</h2>
+<p>If a rebuild changes published numbers, the site must say so, with the dates affected and the reason. See the methodology page for the current rule.</p>
+
+<h2>Sites scraped</h2>
+<ul>
+<li>B and H — enabled, price check needed</li>
+<li>Micro Center — enabled</li>
+<li>Best Buy — disabled (Cloudflare 403 on plain fetch)</li>
+<li>Newegg — disabled (Cloudflare 403 / CAPTCHA on plain fetch)</li>
+<li>Amazon — disabled (expected to block aggressively)</li>
+</ul>
+
+<p>Every index page links to this methodology page.</p>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Category - Price Tracker</title>
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+  <h1>Category: CPUs</h1>
+
+  <!-- Index value and percent change -->
+  <div class="index-header">
+    <div class="index-value" id="index-value">100.0</div>
+    <div class="index-percent" id="index-percent">0.0%</div>
+  </div>
+
+  <!-- Index chart -->
+  <div class="chart-container">
+    <div id="index-chart"></div>
+  </div>
+
+  <!-- Product list -->
+  <div class="product-list">
+    <h3>Tracked Products</h3>
+    <ul>
+      <li>
+        <a href="/product/amd-ryzen-7-9800x3d" target="_blank">
+          AMD Ryzen 7 9800X3D
+        </a>
+        <span class="price">$469.99</span>
+      </li>
+    </ul>
+    <p class="no-data">No other products tracked in this category.</p>
+  </div>
+
+  <!-- Chart component: TradingView Lightweight Charts -->
+  <script src="static/js/chart.js"></script>
+
+  <script>
+    // Initialize index chart for category page
+    initIndexChart('index-chart', 'CPUs', ['1D', '1W', '1M', '1Y']);
+
+    // Load category data from API and populate page
+    loadCategoryData();
+
+    // Toggle handlers for chart time ranges
+    document.querySelectorAll('.toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelector('.toggle.active').classList.remove('active');
+        this.classList.add('active');
+        updateIndexChart('index-chart', this.dataset.range);
+      });
+    });
+  </script>
+</body>
+</html>

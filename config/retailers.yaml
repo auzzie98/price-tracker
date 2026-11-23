@@ -1,0 +1,35 @@
+# Retailers to test in v1, in the order in RETAILER_FEASIBILITY.md.
+# enabled means the prototype may scrape it. Set to false if a check fails.
+# Do not add a retailer without a feasibility row.
+
+retailers:
+  - id: amazon
+    name: Amazon
+    base_url: "https://www.amazon.com"
+    robots_url: "https://www.amazon.com/robots.txt"
+    enabled: true
+    notes: "Expected to be hardest. Blocks scrapers aggressively. v1 must work without it."
+  - id: newegg
+    name: Newegg
+    base_url: "https://www.newegg.com"
+    robots_url: "https://www.newegg.com/robots.txt"
+    enabled: false
+    notes: "Blocked by Cloudflare (HTTP 403 / CAPTCHA) on simple fetch test, 2026-11-22. Page URL: https://www.newegg.com/asus-dual-tuf-rtx5070-12g-gaming-geforce-rtx-5070-12gb-video-cards-double-fans/p/1FT-000Y-00CS0. robots.txt allows product pages but Cloudflare blocks the fetch. v1 must work without Newegg."
+  - id: microcenter
+    name: Micro Center
+    base_url: "https://www.microcenter.com"
+    robots_url: "https://www.microcenter.com/robots.txt"
+    enabled: true
+    notes: "Check whether prices differ by store. If they do, record which store the prototype uses."
+  - id: bestbuy
+    name: Best Buy
+    base_url: "https://www.bestbuy.com"
+    robots_url: "https://www.bestbuy.com/robots.txt"
+    enabled: false
+    notes: "Blocked by Cloudflare (HTTP 403) on simple fetch test, 2026-11-22. Page URL: https://www.bestbuy.com/product/amd-ryzen-7-9800x3d-8-core-16-thread-4-7-ghz-5-2-ghz-max-boost-socket-am5-pci-express-5-0-unlocked-desktop-processor-silver/JXKQHH5XSR. v1 must work without Best Buy."
+  - id: bh
+    name: B and H
+    base_url: "https://www.bhphotovideo.com"
+    robots_url: "https://www.bhphotovideo.com/robots.txt"
+    enabled: true
+    notes: "Check whether the price is shown without an account."
