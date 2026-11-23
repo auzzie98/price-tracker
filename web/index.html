@@ -41,14 +41,18 @@
     </button>
   </div>
 
-  <!-- Large main chart -->
-  <canvas id="main-chart" width="1000" height="300"></canvas>
+  <!-- Trend chart -->
+  <section class="trend-section">
+    <h2 class="trend-title">Trend</h2>
+    <p class="trend-subtitle">Price change vs the start of the selected period.</p>
+    <canvas id="main-chart" width="1000" height="300"></canvas>
+  </section>
 
   <!-- Time toggles below chart -->
   <div class="time-toggles">
-    <button class="toggle active" data-range="1d">1D</button>
+    <button class="toggle" data-range="1d">1D</button>
     <button class="toggle" data-range="1w">1W</button>
-    <button class="toggle" data-range="1m">1M</button>
+    <button class="toggle active" data-range="1m">1M</button>
     <button class="toggle" data-range="1y">1Y</button>
     <button class="toggle" data-range="all">All</button>
   </div>
@@ -162,6 +166,7 @@
         'corsair32gb': [239.99, 238.50, 239.20, 237.80, 236.10, 235.30, 239.99]
       };
       var mainChartValues = modelHistories.rtx2060;
+      var selectedRange = '1m';
 
       function drawMainChartUI() {
         var canvas = mainChartCanvas;
@@ -189,7 +194,7 @@
         var labelGutter = 72;
         var plotWidth = Math.max(1, cssWidth - labelGutter);
         var topPadding = 12;
-        var bottomPadding = 12;
+        var bottomPadding = 32;
         var plotHeight = cssHeight - topPadding - bottomPadding;
 
         function pointX(index) {
@@ -265,6 +270,24 @@
         ctx.fillText('$' + chartMax.toFixed(2), cssWidth - labelGutter + 10, pointY(chartMax));
         ctx.fillText('$' + ((chartMin + chartMax) / 2).toFixed(2), cssWidth - labelGutter + 10, cssHeight / 2);
         ctx.fillText('$' + chartMin.toFixed(2), cssWidth - labelGutter + 10, pointY(chartMin));
+
+        // Mock dates for the selected time period
+        var mockLabels = {
+          '1d': ['9 AM', '12 PM', '3 PM', '6 PM'],
+          '1w': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          '1m': ['Nov 1', 'Nov 8', 'Nov 15', 'Nov 22'],
+          '1y': ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov'],
+          'all': ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov']
+        };
+        var labels = mockLabels[selectedRange] || mockLabels['1d'];
+        ctx.fillStyle = '#9CA3AF';
+        ctx.font = '11px Arial';
+        ctx.textBaseline = 'middle';
+        labels.forEach(function(label, index) {
+          var xIndex = labels.length === 1 ? 0 : index / (labels.length - 1) * (mainChartValues.length - 1);
+          ctx.textAlign = index === 0 ? 'left' : (index === labels.length - 1 ? 'right' : 'center');
+          ctx.fillText(label, pointX(xIndex), cssHeight - 12);
+        });
       }
       
       // Draw the main chart initially
@@ -375,6 +398,8 @@
         btn.addEventListener('click', function() {
           document.querySelector('.toggle.active').classList.remove('active');
           this.classList.add('active');
+          selectedRange = this.dataset.range;
+          drawMainChartUI();
         });
       });
     });

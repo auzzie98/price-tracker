@@ -2,12 +2,10 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-
 from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
@@ -109,5 +107,16 @@ def static_files(path: str):
     return FileResponse("web/static/" + path)
 
 if __name__ == "__main__":
+    import os
+    from pathlib import Path
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # Ensure data directory exists and database is initialized
+    db_path = Path(__file__).resolve().parents[1] / "data" / "price-tracker.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    if not db_path.is_file():
+        from src.price_tracker.db import init_database
+        schema_path = Path(__file__).resolve().parents[1] / "db" / "schema.sql"
+        init_database(str(db_path), str(schema_path))
+        print(f"Initialized database at {db_path}")
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
