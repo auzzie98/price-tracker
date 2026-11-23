@@ -1,10 +1,33 @@
-/* Price Tracker, strict black and white in v1. Task 8 fills in the layout. */
+/* Price Tracker, dark green theme */
 body {
-  background: #ffffff;
-  color: #000000;
+  background: #101713;
+  color: #F4F8F5;
   font-family: Arial, Helvetica, sans-serif;
   margin: 2rem;
 }
 h1 {
   font-size: 1.5rem;
+  color: #F4F8F5;
+}
+
+/* Tile and card styles */
+.tile {
+  background: #18231D;
+  border: 1px solid #29372F;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  color: #F4F8F5;
+}
+.tile-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #F4F8F5;
+}
+.tile-percent {
+  font-size: 0.8rem;
+  color: #9BAAA1;
+}
+.tile-chart {
+  margin-top: 0.5rem;
 }

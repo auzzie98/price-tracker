@@ -19,7 +19,7 @@ function initIndexChart(chartId, chartName, range) {
       grid: {
         vertLines: true,
         horzLines: false,
-        gridLineColor: '#ffffff',
+        gridLineColor: '#29372F',
         leftOffset: 0,
         rightOffset: 0
       },
@@ -45,13 +45,13 @@ function initIndexChart(chartId, chartName, range) {
     grid: {
       vertLines: true,
       horzLines: false,
-      gridLineColor: '#3e3e3e',
+      gridLineColor: '#29372F',
       leftOffset: 10,
       rightOffset: 10
     },
     leftScale: {
       visible: true,
-      color: '#ffffff',
+      color: '#F4F8F5',
       scaleMargins: { top: 0.1, bottom: 0.1 }
     },
     rightScale: {
