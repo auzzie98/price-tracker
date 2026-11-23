@@ -6,17 +6,39 @@
   <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
-
-
-
+  <header class="header-bar">
+    <a class="header-logo" href="/">Price Tracker</a>
+    <nav class="header-nav" aria-label="Primary navigation">
+      <a class="active" href="/">Home</a>
+      <a href="/category?category=GPUs">GPUs</a>
+      <a href="/category?category=CPUs">CPUs</a>
+      <a href="/category?category=RAM">RAM</a>
+      <a href="/methodology.html">Methodology</a>
+    </nav>
+  </header>
 
   <!-- Model pills row (replaces indices pills) -->
   <div class="model-pills">
-    <button class="pill active" data-model="rtx2060">RTX 2060 $349.99 -1.2%</button>
-    <button class="pill" data-model="rtx3080">RTX 3080 $999.99 +0.5%</button>
-    <button class="pill" data-model="rtx5070">ASUS Dual RTX 5070 $579.99 -0.3%</button>
-    <button class="pill" data-model="ryzen9800x3d">AMD Ryzen 7 9800X3D $469.99 +0.8%</button>
-    <button class="pill" data-model="corsair32gb">Corsair Vengeance 32GB DDR5-6000 CL30 $239.99 -2.1%</button>
+    <button class="pill active" data-model="rtx2060">
+      <span class="pill-name">RTX 2060</span>
+      <span class="pill-details">$349.99 <span class="pill-change change-negative">-1.2%</span></span>
+    </button>
+    <button class="pill" data-model="rtx3080">
+      <span class="pill-name">RTX 3080</span>
+      <span class="pill-details">$999.99 <span class="pill-change change-positive">+0.5%</span></span>
+    </button>
+    <button class="pill" data-model="rtx5070">
+      <span class="pill-name">ASUS Dual RTX 5070</span>
+      <span class="pill-details">$579.99 <span class="pill-change change-negative">-0.3%</span></span>
+    </button>
+    <button class="pill" data-model="ryzen9800x3d">
+      <span class="pill-name">AMD Ryzen 7 9800X3D</span>
+      <span class="pill-details">$469.99 <span class="pill-change change-positive">+0.8%</span></span>
+    </button>
+    <button class="pill" data-model="corsair32gb">
+      <span class="pill-name">Corsair Vengeance 32GB DDR5-6000 CL30</span>
+      <span class="pill-details">$239.99 <span class="pill-change change-negative">-2.1%</span></span>
+    </button>
   </div>
 
   <!-- Large main chart -->
@@ -42,67 +64,36 @@
       <div class="model-row">
         <span class="model-name">RTX 2060</span>
         <span class="model-price">$349.99</span>
-        <span class="model-change">-1.2%</span>
-        <div class="model-sparkline"><canvas width="120" height="30"></canvas></div>
+        <span class="model-change change-negative">-1.2%</span>
+        <div class="model-sparkline"><canvas data-model="rtx2060" width="80" height="30"></canvas></div>
       </div>
       <div class="model-row">
         <span class="model-name">RTX 3080</span>
         <span class="model-price">$999.99</span>
-        <span class="model-change">+0.5%</span>
-        <div class="model-sparkline"><canvas width="120" height="30"></canvas></div>
+        <span class="model-change change-positive">+0.5%</span>
+        <div class="model-sparkline"><canvas data-model="rtx3080" width="80" height="30"></canvas></div>
       </div>
       <div class="model-row">
         <span class="model-name">ASUS Dual RTX 5070</span>
         <span class="model-price">$579.99</span>
-        <span class="model-change">-0.3%</span>
-        <div class="model-sparkline"><canvas width="120" height="30"></canvas></div>
+        <span class="model-change change-negative">-0.3%</span>
+        <div class="model-sparkline"><canvas data-model="rtx5070" width="80" height="30"></canvas></div>
       </div>
       <div class="model-row">
         <span class="model-name">AMD Ryzen 7 9800X3D</span>
         <span class="model-price">$469.99</span>
-        <span class="model-change">+0.8%</span>
-        <div class="model-sparkline"><canvas width="120" height="30"></canvas></div>
+        <span class="model-change change-positive">+0.8%</span>
+        <div class="model-sparkline"><canvas data-model="ryzen9800x3d" width="80" height="30"></canvas></div>
       </div>
       <div class="model-row">
         <span class="model-name">Corsair Vengeance 32GB DDR5-6000 CL30</span>
         <span class="model-price">$239.99</span>
-        <span class="model-change">-2.1%</span>
-        <div class="model-sparkline"><canvas width="120" height="30"></canvas></div>
+        <span class="model-change change-negative">-2.1%</span>
+        <div class="model-sparkline"><canvas data-model="corsair32gb" width="80" height="30"></canvas></div>
       </div>
     </div>
   </div>
 
-  <!-- Original tiles section - kept for loadIndexData API compatibility -->
-  <div class="tiles">
-    <div class="tile" id="tile-cpus">
-      <h3>All CPUs</h3>
-      <div class="tile-value" id="cpu-index">100.0</div>
-      <div class="tile-percent" id="cpu-change">0.0%</div>
-      <div class="tile-chart"><canvas id="cpu-chart" width="300" height="80"></canvas></div>
-    </div>
-    <div class="tile" id="tile-gpus">
-      <h3>All GPUs</h3>
-      <div class="tile-value" id="gpu-index">no data yet</div>
-      <div class="tile-percent" id="gpu-change">no data yet</div>
-      <div class="tile-chart"><canvas id="gpu-chart" width="300" height="80"></canvas></div>
-    </div>
-    <div class="tile" id="tile-ram">
-      <h3>All RAM</h3>
-      <div class="tile-value" id="ram-index">no data yet</div>
-      <div class="tile-percent" id="ram-change">no data yet</div>
-      <div class="tile-chart"><canvas id="ram-chart" width="300" height="80"></canvas></div>
-    </div>
-  </div>
-  <div class="movers">
-    <h3>Biggest movers</h3>
-    <div class="toggle-controls">
-      <button class="toggle active" data-range="1d">1D</button>
-      <button class="toggle" data-range="1w">1W</button>
-    </div>
-    <div class="movers-list" id="movers-list">
-      <p>No movers yet, need at least 2 data points per product.</p>
-    </div>
-  </div>
   <script>
     function drawChart(canvasId, values) {
       var canvas = document.getElementById(canvasId);
@@ -133,6 +124,7 @@
       out[6] = endValue;
       return out;
     }
+    async function loadIndexData(range) {
       try {
         const indexesResp = await fetch('/api/indexes');
         if (!indexesResp.ok) throw new Error('Failed to fetch indexes');
@@ -160,89 +152,207 @@
       }
     }
     document.addEventListener('DOMContentLoaded', function() {
-      // Load index data for tiles
-      loadIndexData();
-      
       // Main chart setup
       var mainChartCanvas = document.getElementById('main-chart');
-      // Mock history for All GPUs: [100, 99, 97.35, 95.65]
-      var mainChartValues = [100, 99, 97.35, 95.65];
-      var mainChartMin = 95;
-      var mainChartMax = 105;
-      
-      function drawMainChartUI() {
-        var canvas = document.getElementById('main-chart');
-        if (!canvas) return;
-        var ctx = canvas.getContext('2d');
-        
-        // Fix DPR - set attribute size to match CSS size for crisp drawing
-        var dpr = window.devicePixelRatio || 1;
-        var containerWidth = canvas.offsetWidth;
-        canvas.width = containerWidth * dpr;
-        canvas.height = 300 * dpr;
-        ctx.scale(dpr, dpr);
-        
-        ctx.clearRect(0, 0, containerWidth, 300);
-        
-        // Create gradient fill under the line
-        var gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(0, 200, 5, 0.1)');
-        gradient.addColorStop(1, 'rgba(0, 200, 5, 0)');
-        ctx.fillStyle = gradient;
-        
-        ctx.strokeStyle = '#00C805';
-        ctx.lineWidth = 2;
-        
-        ctx.beginPath();
-        mainChartValues.forEach(function(v, i) {
-          var x = i / (mainChartValues.length - 1) * containerWidth;
-          var y = 300 - (v - chartMin) / (chartMax - chartMin) * 300;
-          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-        
-        // Fill under the line
-        ctx.lineTo(containerWidth, 300);
-        ctx.lineTo(0, 300);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Draw price labels on the right side, outside the chart line
-        ctx.fillStyle = '#9CA3AF';
-        ctx.font = '10px Arial';
-        var dataMin = Math.min.apply(null, mainChartValues);
-        var dataMax = Math.max.apply(null, mainChartValues);
-        var middle = (dataMin + dataMax) / 2;
-        
-        ctx.fillText(dataMax.toFixed(2), containerWidth - 40, 20);
-        ctx.fillText(middle.toFixed(2), containerWidth - 40, 150);
-        ctx.fillText(dataMin.toFixed(2), containerWidth - 40, 280);
-        ctx.strokeStyle = '#00C805';
-        ctx.lineWidth = 2;
-        
-        ctx.beginPath();
-        mainChartValues.forEach(function(v, i) {
-          var x = i / (mainChartValues.length - 1) * mainChartCanvas.width;
-          var y = mainChartCanvas.height - (v - mainChartMin) / (mainChartMax - mainChartMin) * mainChartCanvas.height;
-          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
+      var modelHistories = {
+        'rtx2060': [349.99, 348.50, 345.20, 347.80, 346.10, 344.30, 349.99],
+        'rtx3080': [999.99, 995.50, 1002.20, 1008.00, 1005.50, 1001.20, 1015.50],
+        'rtx5070': [579.99, 578.50, 575.20, 574.80, 573.10, 571.30, 579.99],
+        'ryzen9800x3d': [469.99, 468.50, 472.20, 468.80, 467.50, 465.30, 469.99],
+        'corsair32gb': [239.99, 238.50, 239.20, 237.80, 236.10, 235.30, 239.99]
+      };
+      var mainChartValues = modelHistories.rtx2060;
 
-        // Add price labels on the right side
+      function drawMainChartUI() {
+        var canvas = mainChartCanvas;
+        if (!canvas) return;
+
+        var dpr = window.devicePixelRatio || 1;
+        var cssWidth = Math.max(1, canvas.clientWidth || canvas.offsetWidth);
+        var cssHeight = 300;
+        canvas.setAttribute('width', Math.round(cssWidth * dpr));
+        canvas.setAttribute('height', Math.round(cssHeight * dpr));
+
+        var ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cssWidth, cssHeight);
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, cssWidth, cssHeight);
+
         var dataMin = Math.min.apply(null, mainChartValues);
         var dataMax = Math.max.apply(null, mainChartValues);
-        var middle = (dataMin + dataMax) / 2;
+        var range = dataMax - dataMin;
+        if (range === 0) range = Math.abs(dataMax) * 0.1 || 1;
+        var chartMin = dataMin - range * 0.05;
+        var chartMax = dataMax + range * 0.05;
+        var chartRange = chartMax - chartMin;
+        var labelGutter = 72;
+        var plotWidth = Math.max(1, cssWidth - labelGutter);
+        var topPadding = 12;
+        var bottomPadding = 12;
+        var plotHeight = cssHeight - topPadding - bottomPadding;
+
+        function pointX(index) {
+          if (mainChartValues.length === 1) return plotWidth / 2;
+          return index / (mainChartValues.length - 1) * plotWidth;
+        }
+
+        function pointY(value) {
+          return topPadding + (chartMax - value) / chartRange * plotHeight;
+        }
+
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        var startingPrice = mainChartValues[0];
+
+        function drawColoredSegment(startIndex, startValue, endIndex, endValue) {
+          var startToStarting = Math.round(startValue * 100) - Math.round(startingPrice * 100);
+          var endToStarting = Math.round(endValue * 100) - Math.round(startingPrice * 100);
+
+          if (endToStarting > 0) {
+            ctx.strokeStyle = '#FF5000';
+          } else if (endToStarting < 0) {
+            ctx.strokeStyle = '#00C805';
+          } else if (startToStarting > 0) {
+            ctx.strokeStyle = '#FF5000';
+          } else if (startToStarting < 0) {
+            ctx.strokeStyle = '#00C805';
+          } else {
+            ctx.strokeStyle = '#9CA3AF';
+          }
+
+          ctx.beginPath();
+          ctx.moveTo(pointX(startIndex), pointY(startValue));
+          ctx.lineTo(pointX(endIndex), pointY(endValue));
+          ctx.stroke();
+        }
+
+        for (var i = 0; i < mainChartValues.length - 1; i++) {
+          var startPrice = mainChartValues[i];
+          var endPrice = mainChartValues[i + 1];
+          var startCents = Math.round(startPrice * 100);
+          var endCents = Math.round(endPrice * 100);
+          var startingCents = Math.round(startingPrice * 100);
+
+          if ((startCents < startingCents && endCents > startingCents) ||
+              (startCents > startingCents && endCents < startingCents)) {
+            var fraction = (startingCents - startCents) / (endCents - startCents);
+            var crossingIndex = i + fraction;
+            var crossingX = crossingIndex / (mainChartValues.length - 1) * plotWidth;
+            var startIsAbove = startCents > startingCents;
+
+            ctx.beginPath();
+            ctx.moveTo(pointX(i), pointY(startPrice));
+            ctx.lineTo(crossingX, pointY(startingPrice));
+            ctx.strokeStyle = startIsAbove ? '#FF5000' : '#00C805';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(crossingX, pointY(startingPrice));
+            ctx.lineTo(pointX(i + 1), pointY(endPrice));
+            ctx.strokeStyle = endCents > startingCents ? '#FF5000' : '#00C805';
+            ctx.stroke();
+          } else {
+            drawColoredSegment(i, startPrice, i + 1, endPrice);
+          }
+        }
+
         ctx.fillStyle = '#9CA3AF';
-        ctx.font = '10px Arial';
-        ctx.fillText(dataMax.toFixed(2), mainChartCanvas.width - 40, 20);
-        ctx.fillText(middle.toFixed(2), mainChartCanvas.width - 40, mainChartCanvas.height / 2);
-        ctx.fillText(dataMin.toFixed(2), mainChartCanvas.width - 40, mainChartCanvas.height - 20);
-        
-        // No fill under the line - just the thin line
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('$' + chartMax.toFixed(2), cssWidth - labelGutter + 10, pointY(chartMax));
+        ctx.fillText('$' + ((chartMin + chartMax) / 2).toFixed(2), cssWidth - labelGutter + 10, cssHeight / 2);
+        ctx.fillText('$' + chartMin.toFixed(2), cssWidth - labelGutter + 10, pointY(chartMin));
       }
       
-      // Draw main chart initially (All GPUs)
+      // Draw the main chart initially
       drawMainChartUI();
+      window.addEventListener('resize', drawMainChartUI);
+
+      function drawSparklines() {
+        document.querySelectorAll('.model-sparkline canvas').forEach(function(canvas) {
+          var values = modelHistories[canvas.dataset.model];
+          if (!values || values.length === 0) return;
+
+          var cssWidth = 80;
+          var cssHeight = 30;
+          var dpr = window.devicePixelRatio || 1;
+          canvas.setAttribute('width', Math.round(cssWidth * dpr));
+          canvas.setAttribute('height', Math.round(cssHeight * dpr));
+
+          var ctx = canvas.getContext('2d');
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, cssWidth, cssHeight);
+          ctx.fillStyle = '#121212';
+          ctx.fillRect(0, 0, cssWidth, cssHeight);
+
+          var dataMin = Math.min.apply(null, values);
+          var dataMax = Math.max.apply(null, values);
+          var range = dataMax - dataMin;
+          if (range === 0) range = Math.abs(dataMax) * 0.1 || 1;
+          var chartMin = dataMin - range * 0.05;
+          var chartMax = dataMax + range * 0.05;
+          var chartRange = chartMax - chartMin;
+          var plotHeight = cssHeight - 4;
+          var startingCents = Math.round(values[0] * 100);
+
+          function pointX(index) {
+            return values.length === 1 ? cssWidth / 2 : index / (values.length - 1) * cssWidth;
+          }
+
+          function pointY(value) {
+            return 2 + (chartMax - value) / chartRange * plotHeight;
+          }
+
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+
+          for (var i = 0; i < values.length - 1; i++) {
+            var startCents = Math.round(values[i] * 100);
+            var endCents = Math.round(values[i + 1] * 100);
+
+            if ((startCents < startingCents && endCents > startingCents) ||
+                (startCents > startingCents && endCents < startingCents)) {
+              var fraction = (startingCents - startCents) / (endCents - startCents);
+              var crossingX = (i + fraction) / (values.length - 1) * cssWidth;
+
+              ctx.beginPath();
+              ctx.moveTo(pointX(i), pointY(values[i]));
+              ctx.lineTo(crossingX, pointY(values[0]));
+              ctx.strokeStyle = startCents > startingCents ? '#FF5000' : '#00C805';
+              ctx.stroke();
+
+              ctx.beginPath();
+              ctx.moveTo(crossingX, pointY(values[0]));
+              ctx.lineTo(pointX(i + 1), pointY(values[i + 1]));
+              ctx.strokeStyle = endCents > startingCents ? '#FF5000' : '#00C805';
+              ctx.stroke();
+            } else {
+              ctx.beginPath();
+              ctx.moveTo(pointX(i), pointY(values[i]));
+              ctx.lineTo(pointX(i + 1), pointY(values[i + 1]));
+              if (endCents > startingCents) {
+                ctx.strokeStyle = '#FF5000';
+              } else if (endCents < startingCents) {
+                ctx.strokeStyle = '#00C805';
+              } else if (startCents > startingCents) {
+                ctx.strokeStyle = '#FF5000';
+              } else if (startCents < startingCents) {
+                ctx.strokeStyle = '#00C805';
+              } else {
+                ctx.strokeStyle = '#9CA3AF';
+              }
+              ctx.stroke();
+            }
+          }
+        });
+      }
+
+      drawSparklines();
+      window.addEventListener('resize', drawSparklines);
       
       // Model pill click handlers - switch main chart to model data
       document.querySelectorAll('.pill').forEach(function(btn) {
@@ -260,21 +370,11 @@
         });
       });
       
-      // Model histories
-      var modelHistories = {
-        'rtx2060': [349.99, 348.50, 345.20, 347.80, 346.10, 344.30, 349.99],
-        'rtx3080': [999.99, 995.50, 1002.20, 1008.00, 1005.50, 1001.20, 1015.50],
-        'rtx5070': [579.99, 578.50, 575.20, 574.80, 573.10, 571.30, 579.99],
-        'ryzen9800x3d': [469.99, 468.50, 472.20, 468.80, 467.50, 465.30, 469.99],
-        'corsair32gb': [239.99, 238.50, 239.20, 237.80, 236.10, 235.30, 239.99]
-      };
-      
       // Time toggle handlers
       document.querySelectorAll('.toggle').forEach(function(btn) {
         btn.addEventListener('click', function() {
           document.querySelector('.toggle.active').classList.remove('active');
           this.classList.add('active');
-          loadIndexData(this.dataset.range);
         });
       });
     });
