@@ -3,11 +3,59 @@ body {
   background: #101713;
   color: #F4F8F5;
   font-family: Arial, Helvetica, sans-serif;
-  margin: 2rem;
+  margin: 0;
+}
+body > div {
+  margin: 2rem 2rem 0 2rem;
 }
 h1 {
   font-size: 1.5rem;
   color: #F4F8F5;
+  margin: 0;
+}
+
+/* Header bar */
+.header-bar {
+  background: #202E26;
+  border: 1px solid #29372F;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  margin: -2rem -2rem 2rem -2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header-bar h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.header-bar nav a {
+  color: #9BAAA1;
+  text-decoration: none;
+  margin-left: 1rem;
+  font-size: 0.8rem;
+}
+.header-bar nav a.active {
+  color: #36D6A0;
+}
+
+/* Page title */
+.page-title {
+  color: #F4F8F5;
+  font-size: 1.5rem;
+  margin: 1rem 0 0.5rem 0;
+}
+.page-subtitle {
+  color: #9BAAA1;
+  font-size: 0.9rem;
+  margin: 0.2rem 0 1rem 0;
+}
+
+/* Section headers */
+.section-header {
+  color: #F4F8F5;
+  font-size: 1.2rem;
+  margin: 1rem 0 0.5rem 0;
 }
 
 /* Tile and card styles */
