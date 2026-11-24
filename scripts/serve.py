@@ -30,6 +30,15 @@ def page_response(relative_path):
 app = FastAPI()
 
 
+def initialize_database() -> None:
+    ROOT = Path(__file__).resolve().parents[1]
+    database_path = ROOT / "data" / "price-tracker.db"
+    schema_path = ROOT / "db" / "schema.sql"
+    database_path.parent.mkdir(parents=True, exist_ok=True)
+    from price_tracker.db import init_database
+    init_database(database_path, schema_path)
+
+
 def get_product_options():
     from price_tracker.config import load_products
     products = [
@@ -222,42 +231,47 @@ def api_product(sku: str):
 
 @app.get("/api/products/{model_id}/retailer-prices")
 def product_retailer_prices(model_id: str):
-    from price_tracker.db import connect
     import sqlite3
-    db_path = str(DB_PATH)
-    conn = sqlite3.connect(db_path)
+    from price_tracker.config import load_products
+    conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     try:
         rows = conn.execute(
-            """SELECT retailer_id, price_cents, in_stock, observed_at
+            """SELECT id, retailer_id, price_cents, in_stock, observed_at, source_url
                FROM observations
                WHERE sku_id = ?
                ORDER BY observed_at DESC""",
             (model_id,),
         ).fetchall()
+        configured = {product["id"]: product for product in load_products()}
+        product_url = None
+        if model_id in configured:
+            product_url = configured[model_id].get("urls", {})
+        result = []
+        for row in rows:
+            retailer = conn.execute(
+                "SELECT name, base_url FROM retailers WHERE id = ?",
+                (row["retailer_id"],),
+            ).fetchone()
+            if not retailer:
+                continue
+            source_url = row["source_url"]
+            is_baseline = source_url == "Nov 23, 2026 baseline snapshot"
+            label = "Baseline" if is_baseline else "Approved receipt"
+            result.append({
+                "observation_id": row["id"],
+                "retailer_id": row["retailer_id"],
+                "retailer_name": retailer["name"],
+                "price_cents": row["price_cents"],
+                "price_dollars": row["price_cents"] / 100,
+                "in_stock": bool(row["in_stock"]),
+                "observed_at": row["observed_at"],
+                "source_url": source_url,
+                "source_label": label,
+                "product_url": product_url.get(row["retailer_id"]) if product_url else None,
+            })
     finally:
         conn.close()
-    result = []
-    for row in rows:
-        retailer = conn.execute(
-            "SELECT name, base_url FROM retailers WHERE id = ?", (row["retailer_id"],)
-        ).fetchone()
-        if retailer:
-            # Build the exact product page URL from config
-            # Look up the product URLs from config
-            from price_tracker.config import load_products
-            configured = {product["id"]: product for product in load_products()}
-            product_url = None
-            if model_id in configured:
-                product_urls = configured[model_id].get("urls", {})
-                product_url = product_urls.get(retailer["id"])
-            result.append({
-                "retailer_name": retailer["name"],
-                "price_dollars": row["price_cents"] / 100 if row["price_cents"] is not None else None,
-                "in_stock": bool(row["in_stock"]),
-                "source_url": row["source_url"],
-                "product_url": product_url,
-            })
     return {"retailer_prices": result}
 
 @app.get("/api/products/{model_id}/history")
@@ -835,15 +849,7 @@ def uploaded_files(path: str):
 
 if __name__ == "__main__":
     import os
-    from pathlib import Path
     import uvicorn
-    # Ensure data directory exists and database is initialized
-    db_path = Path(__file__).resolve().parents[1] / "data" / "price-tracker.db"
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    if not db_path.is_file():
-        from src.price_tracker.db import init_database
-        schema_path = Path(__file__).resolve().parents[1] / "db" / "schema.sql"
-        init_database(str(db_path), str(schema_path))
-        print(f"Initialized database at {db_path}")
+    initialize_database()
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

@@ -167,7 +167,22 @@
     ctx.lineWidth = state.hovered ? 3 : 2;
     ctx.lineCap = "butt";
     ctx.lineJoin = "miter";
-    for (var segmentIndex = 0; values.length > 1 && segmentIndex < points.length - 1; segmentIndex++) {
+    if (state.dates && state.dates.length === values.length && values.length === 2) {
+      var baselinePoint = points[0];
+      var approvedPoint = points[1];
+      ctx.beginPath();
+      ctx.moveTo(baselinePoint.x, baselinePoint.y);
+      ctx.lineTo(approvedPoint.x, baselinePoint.y);
+      ctx.strokeStyle = values[0] < startValue ? "#00C805" : values[0] > startValue ? "#FF5000" : "#9CA3AF";
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(approvedPoint.x, baselinePoint.y);
+      ctx.lineTo(approvedPoint.x, approvedPoint.y);
+      ctx.strokeStyle = values[1] < startValue ? "#00C805" : values[1] > startValue ? "#FF5000" : "#9CA3AF";
+      ctx.stroke();
+    }
+
+    for (var segmentIndex = 0; values.length > 1 && !(state.dates && state.dates.length === values.length && values.length === 2) && segmentIndex < points.length - 1; segmentIndex++) {
       var first = points[segmentIndex];
       var second = points[segmentIndex + 1];
       var firstCents = Math.round(first.value * 100);
@@ -226,7 +241,7 @@
     var labelIndexes = state.range === "1d"
       ? [0, Math.round((values.length - 1) * 0.333), Math.round((values.length - 1) * 0.667), values.length - 1]
       : state.range === "1m"
-        ? (values.length === 1 ? [0] : [0, Math.round((values.length - 1) * 7 / 22), Math.round((values.length - 1) * 14 / 22), values.length - 1])
+        ? [0]
         : [0, Math.round((values.length - 1) * 0.25), Math.round((values.length - 1) * 0.5), Math.round((values.length - 1) * 0.75), values.length - 1];
     // Draw x-axis labels: 4-5 labels for "all" range, spaced properly, inside chart area
     ctx.fillStyle = "#9CA3AF";
@@ -252,7 +267,16 @@
       actualLabelIndexes = labelIndexes;
     }
 
-    actualLabelIndexes.forEach(function (index, position) {
+    if (state.range === "1m") {
+      var monthLabels = ["Nov 1", "Nov 8", "Nov 15", "Nov 22"];
+      var monthFractions = [0.03, 0.31, 0.59, 0.87];
+      monthLabels.forEach(function (text, position) {
+        var xPos = monthFractions[position] * (width - 96);
+        ctx.textAlign = position === 0 ? "left" : position === monthLabels.length - 1 ? "right" : "center";
+        ctx.fillText(text, xPos, height - 12);
+      });
+    } else {
+      actualLabelIndexes.forEach(function (index, position) {
       var point = points[index];
       // For "all" range, ensure last label stays inside chart area (not at extreme right edge)
       var xPos;
@@ -269,11 +293,10 @@
         ? "Nov 23"
         : state.range === "1d"
         ? ["9 AM", "12 PM", "3 PM", "6 PM"][position]
-        : state.range === "1m"
-        ? ["Nov 1", "Nov 8", "Nov 15", "Nov 22"][position]
         : formatAxisDate(dates[index], state.range);
       ctx.fillText(text, xPos, height - 12);
-    });
+      });
+    }
 
     if (state.hovered && state.hoverIndex !== null) {
       var hoverPoint = points[state.hoverIndex];
