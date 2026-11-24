@@ -46,6 +46,7 @@
   <section class="trend-section">
     <h2 class="trend-title">Trend</h2>
     <p class="trend-subtitle">Price change vs the start of the selected period.</p>
+    <div class="trend-price" id="trend-price">$349.99</div>
     <canvas id="main-chart" width="1000" height="300"></canvas>
   </section>
 
@@ -99,6 +100,7 @@
     </div>
   </div>
 
+  <script src="/static/js/chart.js"></script>
   <script>
     function drawChart(canvasId, values) {
       var canvas = document.getElementById(canvasId);
@@ -289,6 +291,14 @@
           ctx.textAlign = index === 0 ? 'left' : (index === labels.length - 1 ? 'right' : 'center');
           ctx.fillText(label, pointX(xIndex), cssHeight - 12);
         });
+        if (window.PriceTrackerChart) {
+          window.PriceTrackerChart.draw(
+            mainChartCanvas,
+            mainChartValues,
+            selectedRange,
+            document.getElementById('trend-price')
+          );
+        }
       }
       
       // Draw the main chart initially

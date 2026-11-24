@@ -16,7 +16,29 @@ window.mockCatalog = (function() {
 
     values[count - 1] = base * (1 + trend);
     values[count - 1] = Math.round(values[count - 1] * 100) / 100;
+    values.dates = mockDates(count, range);
     return values;
+  }
+
+  function mockDates(count, range) {
+    var end = new Date(2026, 10, 23, 12, 0, 0);
+    var dates = [];
+    for (var i = 0; i < count; i++) {
+      var date = new Date(end);
+      if (range === '1d') {
+        date.setHours(Math.floor(i * 24 / count), (i * 60 / count) % 60, 0, 0);
+      } else if (range === '1w') {
+        date.setDate(end.getDate() - (count - 1 - i));
+      } else if (range === '1m') {
+        date.setDate(end.getDate() - (count - 1 - i));
+      } else if (range === '1y') {
+        date.setDate(end.getDate() - Math.round((count - 1 - i) * 365 / (count - 1)));
+      } else {
+        date.setMonth(end.getMonth() - Math.round((count - 1 - i) * 36 / (count - 1)));
+      }
+      dates.push(date);
+    }
+    return dates;
   }
 
   function ranges(base, trend, seed) {

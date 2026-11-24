@@ -171,6 +171,47 @@ h1 {
   font-size: 13px;
   margin: 0.25rem 0 0.5rem;
 }
+.trend-price {
+  color: #FFFFFF;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0.35rem 0 0.25rem;
+}
+.chart-tooltip {
+  position: absolute;
+  z-index: 20;
+  display: none;
+  min-width: 150px;
+  pointer-events: none;
+  background: #121212;
+  border: 1px solid #2D2D2D;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 0.65rem 0.75rem;
+  color: #FFFFFF;
+}
+.chart-tooltip.visible {
+  display: grid;
+  gap: 0.25rem;
+}
+.chart-tooltip strong {
+  font-size: 18px;
+  line-height: 1;
+  color: #FFFFFF;
+}
+.chart-tooltip span {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+.trend-section {
+  position: relative;
+}
+#main-chart,
+#category-chart,
+#product-chart {
+  touch-action: none;
+}
 #main-chart {
   background: #000000;
   border: 1px solid #2D2D2D;
@@ -205,6 +246,14 @@ h1 {
 .time-toggles .toggle.active {
   background: #00C805;
   color: #000000;
+}
+.price-label {
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+  color: #9CA3AF;
+  width: auto;
+  white-space: normal;
+  overflow: visible;
 }
 
 /* Individual models section */

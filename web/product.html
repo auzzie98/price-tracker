@@ -28,6 +28,7 @@
     <section class="trend-section product-trend">
       <h2 class="trend-title">Trend</h2>
       <p class="trend-subtitle">Price change vs the start of the selected period.</p>
+      <div class="trend-price" id="trend-price">$579.99</div>
       <canvas id="product-chart" width="1000" height="300"></canvas>
     </section>
     <div class="time-toggles">
@@ -50,6 +51,7 @@
   </main>
 
   <script src="/static/js/mock-data.js"></script>
+  <script src="/static/js/chart.js"></script>
   <script>
     var pathParts = window.location.pathname.split('/').filter(Boolean);
     var productId = pathParts[pathParts.length - 1] || 'asus-dual-rtx5070-12g';
@@ -121,6 +123,14 @@
         ctx.textAlign = index === 0 ? 'left' : index === labels.length - 1 ? 'right' : 'center';
         ctx.fillText(label, x(point), height - 12);
       });
+      if (window.PriceTrackerChart) {
+        window.PriceTrackerChart.draw(
+          canvas,
+          values,
+          selectedRange,
+          document.getElementById('trend-price')
+        );
+      }
     }
 
     var retailerRows = document.getElementById('retailer-rows');
