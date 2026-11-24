@@ -19,39 +19,18 @@
   </header>
 
   <!-- Model pills row (replaces indices pills) -->
-  <div class="model-pills">
-    <button class="pill active" data-model="rtx2060">
-      <span class="pill-name">RTX 2060</span>
-      <span class="pill-details">$349.99 <span class="pill-change change-negative">-1.2%</span></span>
-    </button>
-    <button class="pill" data-model="rtx3080">
-      <span class="pill-name">RTX 3080</span>
-      <span class="pill-details">$999.99 <span class="pill-change change-positive">+0.5%</span></span>
-    </button>
-    <button class="pill" data-model="rtx5070">
-      <span class="pill-name">ASUS Dual RTX 5070</span>
-      <span class="pill-details">$579.99 <span class="pill-change change-negative">-0.3%</span></span>
-    </button>
-    <button class="pill" data-model="ryzen9800x3d">
-      <span class="pill-name">AMD Ryzen 7 9800X3D</span>
-      <span class="pill-details">$469.99 <span class="pill-change change-positive">+0.8%</span></span>
-    </button>
-    <button class="pill" data-model="corsair32gb">
-      <span class="pill-name">Corsair Vengeance 32GB DDR5-6000 CL30</span>
-      <span class="pill-details">$239.99 <span class="pill-change change-negative">-2.1%</span></span>
-    </button>
-  </div>
+  <div class="model-pills" id="model-pills"></div>
 
   <!-- Trend chart -->
   <section class="trend-section">
     <h2 class="trend-title">Trend</h2>
-    <p class="trend-subtitle">Price change vs the start of the selected period.</p>
+    <p class="trend-subtitle">Price in dollars for the selected model.</p>
     <div class="trend-legend">
       <div>
-        <div class="trend-model-name" id="trend-model-name">RTX 2060</div>
+        <div class="trend-model-name" id="trend-model-name">Model</div>
         <div class="trend-price-row">
-          <span class="trend-price" id="trend-price">$349.99</span>
-          <span class="trend-change change-negative" id="trend-change">-1.2%</span>
+          <span class="trend-price" id="trend-price">$0.00</span>
+          <span class="trend-change" id="trend-change">0.0%</span>
         </div>
       </div>
       <div class="trend-hover-date" id="trend-hover-date"></div>
@@ -74,39 +53,8 @@
   <!-- Individual models section -->
   <div class="individual-models">
     <h3 class="section-header">Individual models</h3>
-    <p class="model-label">Data is mock for demonstration purposes.</p>
-    <div class="model-list">
-      <div class="model-row">
-        <span class="model-name">RTX 2060</span>
-        <span class="model-price">$349.99</span>
-        <span class="model-change change-negative">-1.2%</span>
-        <div class="model-sparkline"><canvas data-model="rtx2060" width="80" height="30"></canvas></div>
-      </div>
-      <div class="model-row">
-        <span class="model-name">RTX 3080</span>
-        <span class="model-price">$999.99</span>
-        <span class="model-change change-positive">+0.5%</span>
-        <div class="model-sparkline"><canvas data-model="rtx3080" width="80" height="30"></canvas></div>
-      </div>
-      <div class="model-row">
-        <span class="model-name">ASUS Dual RTX 5070</span>
-        <span class="model-price">$579.99</span>
-        <span class="model-change change-negative">-0.3%</span>
-        <div class="model-sparkline"><canvas data-model="rtx5070" width="80" height="30"></canvas></div>
-      </div>
-      <div class="model-row">
-        <span class="model-name">AMD Ryzen 7 9800X3D</span>
-        <span class="model-price">$469.99</span>
-        <span class="model-change change-positive">+0.8%</span>
-        <div class="model-sparkline"><canvas data-model="ryzen9800x3d" width="80" height="30"></canvas></div>
-      </div>
-      <div class="model-row">
-        <span class="model-name">Corsair Vengeance 32GB DDR5-6000 CL30</span>
-        <span class="model-price">$239.99</span>
-        <span class="model-change change-negative">-2.1%</span>
-        <div class="model-sparkline"><canvas data-model="corsair32gb" width="80" height="30"></canvas></div>
-      </div>
-    </div>
+    <p class="model-label">Real data, baseline Nov 23, 2026, Black Friday week snapshot.</p>
+    <div class="model-list" id="catalog-model-list"></div>
   </div>
 
   <script src="/static/js/chart.js"></script>
@@ -130,16 +78,6 @@
       });
       ctx.stroke();
     }
-    function mockHistory(endValue) {
-      var out = [];
-      var v = endValue * 0.98;
-      for (var i = 0; i < 7; i++) {
-        v = v + (Math.random() - 0.48) * 1.2;
-        out.push(v);
-      }
-      out[6] = endValue;
-      return out;
-    }
     async function loadIndexData(range) {
       try {
         const indexesResp = await fetch('/api/indexes');
@@ -151,17 +89,17 @@
         if (cpuData) {
           document.getElementById('cpu-index').textContent = cpuData.index_value.toFixed(2);
           document.getElementById('cpu-change').textContent = '0.0%';
-          drawChart('cpu-chart', mockHistory(cpuData.index_value));
+          drawChart('cpu-chart', [cpuData.index_value]);
         }
         if (gpuData) {
           document.getElementById('gpu-index').textContent = gpuData.index_value.toFixed(2);
           document.getElementById('gpu-change').textContent = '0.0%';
-          drawChart('gpu-chart', mockHistory(gpuData.index_value));
+          drawChart('gpu-chart', [gpuData.index_value]);
         }
         if (ramData) {
           document.getElementById('ram-index').textContent = ramData.index_value.toFixed(2);
           document.getElementById('ram-change').textContent = '0.0%';
-          drawChart('ram-chart', mockHistory(ramData.index_value));
+          drawChart('ram-chart', [ramData.index_value]);
         }
       } catch (err) {
         console.error('Failed to load index data:', err);
@@ -170,14 +108,88 @@
     document.addEventListener('DOMContentLoaded', function() {
       // Main chart setup
       var mainChartCanvas = document.getElementById('main-chart');
-      var modelHistories = {
-        'rtx2060': [349.99, 348.50, 345.20, 347.80, 346.10, 344.30, 349.99],
-        'rtx3080': [999.99, 995.50, 1002.20, 1008.00, 1005.50, 1001.20, 1015.50],
-        'rtx5070': [579.99, 578.50, 575.20, 574.80, 573.10, 571.30, 579.99],
-        'ryzen9800x3d': [469.99, 468.50, 472.20, 468.80, 467.50, 465.30, 469.99],
-        'corsair32gb': [239.99, 238.50, 239.20, 237.80, 236.10, 235.30, 239.99]
-      };
-      var mainChartValues = modelHistories.rtx2060;
+      var mainChartValues = [];
+      var mainChartDates = [];
+      var liveModels = {};
+      var liveMainModelId = 'rtx2060';
+      async function loadCatalog() {
+        try {
+          var response = await fetch('/api/catalog');
+          if (!response.ok) return;
+          var data = await response.json();
+          var featured = data.products.slice(0, 5);
+          document.getElementById('model-pills').innerHTML = featured.map(function(product, index) {
+            var price = product.price_cents === null
+              ? 'No data yet'
+              : '$' + (product.price_cents / 100).toFixed(2);
+            return '<button class="pill ' + (index === 0 ? 'active' : '') + '" data-model="' +
+              product.id + '"><span class="pill-name">' + product.model +
+              '</span><span class="pill-details">' + price + '</span></button>';
+          }).join('');
+          document.getElementById('catalog-model-list').innerHTML = data.products.map(function(product) {
+            var price = product.price_cents === null
+              ? 'No data yet'
+              : '$' + (product.price_cents / 100).toFixed(2);
+            return '<div class="model-row"><a class="model-name" href="/product/' + product.id + '">' +
+              product.model + '</a><span class="model-price">' + price +
+              '</span><span class="model-change"></span><div class="model-sparkline"><canvas data-model="' +
+              product.id + '" width="80" height="30"></canvas></div></div>';
+          }).join('');
+
+          featured.forEach(function(product) {
+            liveModels[product.id] = product;
+          });
+          if (featured.length) {
+            liveMainModelId = featured[0].id;
+            loadLiveHistory(featured[0].id);
+          }
+          attachCatalogPills();
+          drawLiveSparklines();
+        } catch (error) {
+          console.error('Failed to load live catalog:', error);
+        }
+      }
+
+      async function loadLiveHistory(modelId) {
+        liveMainModelId = modelId;
+        try {
+          var response = await fetch('/api/products/' + encodeURIComponent(modelId) + '/history');
+          if (!response.ok) {
+            mainChartValues = [];
+            mainChartDates = [];
+            drawMainChartUI();
+            return;
+          }
+          var data = await response.json();
+          mainChartValues = data.history.map(function(point) {
+            return point.median_price_dollars;
+          });
+          mainChartDates = data.history.map(function(point) { return point.date; });
+          var model = liveModels[modelId];
+          if (model) {
+            document.getElementById('trend-model-name').textContent = model.model;
+            document.getElementById('trend-change').textContent =
+              mainChartValues.length > 1
+                ? ((mainChartValues[mainChartValues.length - 1] - mainChartValues[0]) / mainChartValues[0] * 100).toFixed(1) + '%'
+                : '0.0%';
+          }
+          drawMainChartUI();
+        } catch (error) {
+          mainChartValues = [];
+          mainChartDates = [];
+          drawMainChartUI();
+        }
+      }
+
+      function attachCatalogPills() {
+        document.querySelectorAll('.pill').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('.pill').forEach(function(pill) { pill.classList.remove('active'); });
+            btn.classList.add('active');
+            loadLiveHistory(btn.dataset.model);
+          });
+        });
+      }
       var selectedRange = '1m';
 
       function drawMainChartUI() {
@@ -306,7 +318,8 @@
             mainChartValues,
             selectedRange,
             document.getElementById('trend-price'),
-            document.getElementById('trend-hover-date')
+            document.getElementById('trend-hover-date'),
+            mainChartDates
           );
         }
       }
@@ -317,116 +330,52 @@
 
       function drawSparklines() {
         document.querySelectorAll('.model-sparkline canvas').forEach(function(canvas) {
-          var values = modelHistories[canvas.dataset.model];
-          if (!values || values.length === 0) return;
-
-          var cssWidth = 80;
-          var cssHeight = 30;
-          var dpr = window.devicePixelRatio || 1;
-          canvas.setAttribute('width', Math.round(cssWidth * dpr));
-          canvas.setAttribute('height', Math.round(cssHeight * dpr));
-
-          var ctx = canvas.getContext('2d');
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          ctx.clearRect(0, 0, cssWidth, cssHeight);
-          ctx.fillStyle = '#121212';
-          ctx.fillRect(0, 0, cssWidth, cssHeight);
-
-          var dataMin = Math.min.apply(null, values);
-          var dataMax = Math.max.apply(null, values);
-          var range = dataMax - dataMin;
-          if (range === 0) range = Math.abs(dataMax) * 0.1 || 1;
-          var chartMin = dataMin - range * 0.05;
-          var chartMax = dataMax + range * 0.05;
-          var chartRange = chartMax - chartMin;
-          var plotHeight = cssHeight - 4;
-          var startingCents = Math.round(values[0] * 100);
-
-          function pointX(index) {
-            return values.length === 1 ? cssWidth / 2 : index / (values.length - 1) * cssWidth;
-          }
-
-          function pointY(value) {
-            return 2 + (chartMax - value) / chartRange * plotHeight;
-          }
-
-          ctx.lineWidth = 2;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-
-          for (var i = 0; i < values.length - 1; i++) {
-            var startCents = Math.round(values[i] * 100);
-            var endCents = Math.round(values[i + 1] * 100);
-
-            if ((startCents < startingCents && endCents > startingCents) ||
-                (startCents > startingCents && endCents < startingCents)) {
-              var fraction = (startingCents - startCents) / (endCents - startCents);
-              var crossingX = (i + fraction) / (values.length - 1) * cssWidth;
-
-              ctx.beginPath();
-              ctx.moveTo(pointX(i), pointY(values[i]));
-              ctx.lineTo(crossingX, pointY(values[0]));
-              ctx.strokeStyle = startCents > startingCents ? '#FF5000' : '#00C805';
-              ctx.stroke();
-
-              ctx.beginPath();
-              ctx.moveTo(crossingX, pointY(values[0]));
-              ctx.lineTo(pointX(i + 1), pointY(values[i + 1]));
-              ctx.strokeStyle = endCents > startingCents ? '#FF5000' : '#00C805';
-              ctx.stroke();
-            } else {
-              ctx.beginPath();
-              ctx.moveTo(pointX(i), pointY(values[i]));
-              ctx.lineTo(pointX(i + 1), pointY(values[i + 1]));
-              if (endCents > startingCents) {
-                ctx.strokeStyle = '#FF5000';
-              } else if (endCents < startingCents) {
-                ctx.strokeStyle = '#00C805';
-              } else if (startCents > startingCents) {
-                ctx.strokeStyle = '#FF5000';
-              } else if (startCents < startingCents) {
-                ctx.strokeStyle = '#00C805';
-              } else {
-                ctx.strokeStyle = endCents >= startingCents ? '#FF5000' : '#00C805';
+          var modelId = canvas.dataset.model;
+          if (!modelId) return;
+          fetch('/api/products/' + encodeURIComponent(modelId) + '/history')
+            .then(function(response) { return response.ok ? response.json() : null; })
+            .then(function(data) {
+              var values = data && data.history.length
+                ? data.history.map(function(point) { return point.median_price_dollars; })
+                : [];
+              var width = 80;
+              var height = 30;
+              var dpr = window.devicePixelRatio || 1;
+              canvas.width = width * dpr;
+              canvas.height = height * dpr;
+              var ctx = canvas.getContext('2d');
+              ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+              ctx.fillStyle = '#121212';
+              ctx.fillRect(0, 0, width, height);
+              if (!values.length) return;
+              var min = Math.min.apply(null, values);
+              var max = Math.max.apply(null, values);
+              var spread = max - min || Math.abs(max) * 0.1 || 1;
+              var chartMin = min - spread * 0.05;
+              var chartMax = max + spread * 0.05;
+              var startCents = Math.round(values[0] * 100);
+              ctx.lineWidth = 2;
+              ctx.lineCap = 'butt';
+              ctx.lineJoin = 'miter';
+              for (var i = 0; i < values.length - 1; i++) {
+                var x1 = i / (values.length - 1) * width;
+                var x2 = (i + 1) / (values.length - 1) * width;
+                var y1 = 2 + (chartMax - values[i]) / (chartMax - chartMin) * 26;
+                var y2 = 2 + (chartMax - values[i + 1]) / (chartMax - chartMin) * 26;
+                var endCents = Math.round(values[i + 1] * 100);
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = endCents < startCents ? '#00C805' : '#FF5000';
+                ctx.stroke();
               }
-              ctx.stroke();
-            }
-          }
+            })
+            .catch(function() {});
         });
       }
 
       drawSparklines();
       window.addEventListener('resize', drawSparklines);
-      
-      // Model pill click handlers - switch main chart to model data
-      document.querySelectorAll('.pill').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          // Update active pill
-          document.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
-          this.classList.add('active');
-          
-          // Update main chart values based on clicked model
-          var model = this.dataset.model;
-          if (modelHistories[model]) {
-            mainChartValues = modelHistories[model];
-          }
-          var modelMeta = {
-            rtx2060: ['RTX 2060', '-1.2%', 'change-negative'],
-            rtx3080: ['RTX 3080', '+0.5%', 'change-positive'],
-            rtx5070: ['ASUS Dual RTX 5070', '-0.3%', 'change-negative'],
-            ryzen9800x3d: ['AMD Ryzen 7 9800X3D', '+0.8%', 'change-positive'],
-            corsair32gb: ['Corsair Vengeance 32GB DDR5-6000 CL30', '-2.1%', 'change-negative']
-          };
-          var meta = modelMeta[model];
-          if (meta) {
-            document.getElementById('trend-model-name').textContent = meta[0];
-            var trendChange = document.getElementById('trend-change');
-            trendChange.textContent = meta[1];
-            trendChange.className = 'trend-change ' + meta[2];
-          }
-          drawMainChartUI();
-        });
-      });
       
       // Time toggle handlers
       document.querySelectorAll('.toggle').forEach(function(btn) {
@@ -437,6 +386,7 @@
           drawMainChartUI();
         });
       });
+      loadCatalog();
     });
   </script>
 </body>

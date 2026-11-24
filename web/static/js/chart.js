@@ -69,6 +69,13 @@
     return tooltip;
   }
 
+  function createSinglePointNote(canvas) {
+    var note = document.createElement("p");
+    note.className = "chart-single-point-note";
+    canvas.parentElement.appendChild(note);
+    return note;
+  }
+
   function layout(state) {
     var canvas = state.canvas;
     var width = Math.max(1, canvas.clientWidth || canvas.offsetWidth);
@@ -80,11 +87,11 @@
     if (spread === 0) spread = Math.abs(dataMax) * 0.1 || 1;
     var chartMin = dataMin - spread * 0.08;
     var chartMax = dataMax + spread * 0.08;
-    var plotWidth = Math.max(1, width - 72);
+    var plotWidth = Math.max(1, width - 96);
     var plotHeight = height - 44;
 
     return values.map(function (value, index) {
-      var x = values.length === 1 ? plotWidth / 2 : index / (values.length - 1) * plotWidth;
+      var x = values.length === 1 ? plotWidth : index / (values.length - 1) * plotWidth;
       var y = 12 + (chartMax - value) / (chartMax - chartMin) * plotHeight;
       return { x: x, y: y, value: value };
     });
@@ -112,24 +119,55 @@
     var endValue = values[values.length - 1];
     var lineColor = endValue < startValue ? "#00C805" : "#FF5000";
 
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    for (var i = 1; i < points.length; i++) {
-      ctx.lineTo(points[i].x, points[i].y);
+    if (values.length === 1) {
+      var flatY = points[0].y;
+      ctx.beginPath();
+      ctx.moveTo(0, flatY);
+      ctx.lineTo(points[0].x, flatY);
+      ctx.strokeStyle = "#9CA3AF";
+      ctx.lineWidth = state.hovered ? 3 : 2;
+      ctx.lineCap = "butt";
+      ctx.lineJoin = "miter";
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(points[0].x, flatY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = lineColor;
+      ctx.fill();
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
-    ctx.lineTo(points[points.length - 1].x, height - 32);
-    ctx.lineTo(points[0].x, height - 32);
-    ctx.closePath();
-    var gradient = ctx.createLinearGradient(0, 12, 0, height - 32);
-    gradient.addColorStop(0, lineColor === "#00C805" ? "rgba(0,200,5,0.28)" : lineColor === "#FF5000" ? "rgba(255,80,0,0.28)" : "rgba(156,163,175,0.14)");
-    gradient.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = gradient;
-    ctx.fill();
+
+    if (values.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (var i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.lineTo(points[points.length - 1].x, height - 32);
+      ctx.lineTo(points[0].x, height - 32);
+      ctx.closePath();
+      var gradient = ctx.createLinearGradient(0, 12, 0, height - 32);
+      gradient.addColorStop(0, lineColor === "#00C805" ? "rgba(0,200,5,0.28)" : "rgba(255,80,0,0.28)");
+      gradient.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(0, points[0].y);
+      ctx.lineTo(points[0].x, points[0].y);
+      ctx.lineTo(points[0].x, height - 32);
+      ctx.lineTo(0, height - 32);
+      ctx.closePath();
+      ctx.fillStyle = lineColor === "#00C805" ? "rgba(0,200,5,0.18)" : "rgba(255,80,0,0.18)";
+      ctx.fill();
+    }
 
     ctx.lineWidth = state.hovered ? 3 : 2;
     ctx.lineCap = "butt";
     ctx.lineJoin = "miter";
-    for (var segmentIndex = 0; segmentIndex < points.length - 1; segmentIndex++) {
+    for (var segmentIndex = 0; values.length > 1 && segmentIndex < points.length - 1; segmentIndex++) {
       var first = points[segmentIndex];
       var second = points[segmentIndex + 1];
       var firstCents = Math.round(first.value * 100);
@@ -168,32 +206,73 @@
     ctx.font = "12px Arial";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText("$" + chartMax.toFixed(2), width - 62, 12);
-    ctx.fillText("$" + ((chartMin + chartMax) / 2).toFixed(2), width - 62, height / 2);
-    ctx.fillText("$" + chartMin.toFixed(2), width - 62, height - 44);
+    ctx.fillText("$" + chartMax.toFixed(2), width - 88, 12);
+    ctx.fillText("$" + ((chartMin + chartMax) / 2).toFixed(2), width - 88, height / 2);
+    ctx.fillText("$" + chartMin.toFixed(2), width - 88, height - 44);
 
     var currentY = points[points.length - 1].y;
     ctx.fillStyle = lineColor;
-    ctx.fillRect(width - 68, currentY - 10, 68, 20);
+    ctx.fillRect(width - 112, currentY - 12, 100, 24);
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "bold 12px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("$" + endValue.toFixed(2), width - 34, currentY + 4);
+    // Offset further left so price tag doesn't overlap y-axis label or the rightmost dot
+    var priceX = width - 72;
+    ctx.fillText("$" + endValue.toFixed(2), priceX, currentY + 4);
 
-    var dates = getDates(values.length, state.range);
-    var labelIndexes = state.range === "1m"
-      ? [0, Math.round((values.length - 1) * 7 / 22), Math.round((values.length - 1) * 14 / 22), values.length - 1]
-      : [0, Math.round((values.length - 1) * 0.25), Math.round((values.length - 1) * 0.5), Math.round((values.length - 1) * 0.75), values.length - 1];
+    var dates = state.dates && state.dates.length === values.length
+      ? state.dates.map(function (date) { return new Date(date + "T12:00:00"); })
+      : getDates(values.length, state.range);
+    var labelIndexes = state.range === "1d"
+      ? [0, Math.round((values.length - 1) * 0.333), Math.round((values.length - 1) * 0.667), values.length - 1]
+      : state.range === "1m"
+        ? (values.length === 1 ? [0] : [0, Math.round((values.length - 1) * 7 / 22), Math.round((values.length - 1) * 14 / 22), values.length - 1])
+        : [0, Math.round((values.length - 1) * 0.25), Math.round((values.length - 1) * 0.5), Math.round((values.length - 1) * 0.75), values.length - 1];
+    // Draw x-axis labels: 4-5 labels for "all" range, spaced properly, inside chart area
     ctx.fillStyle = "#9CA3AF";
     ctx.font = "11px Arial";
     ctx.textBaseline = "middle";
-    labelIndexes.forEach(function (index, position) {
+
+    // Determine which label indices to show, limiting "all" range to 5 labels max
+    var actualLabelIndexes;
+    if (state.range === "all") {
+      // For "all" range, show at most 5 labels spread evenly across the data
+      var maxLabels = 5;
+      if (values.length <= maxLabels) {
+        actualLabelIndexes = labelIndexes;
+      } else {
+        // Calculate evenly-spaced indices
+        var step = (values.length - 1) / (maxLabels - 1);
+        actualLabelIndexes = [];
+        for (var i = 0; i < maxLabels; i++) {
+          actualLabelIndexes.push(Math.round(i * step));
+        }
+      }
+    } else {
+      actualLabelIndexes = labelIndexes;
+    }
+
+    actualLabelIndexes.forEach(function (index, position) {
       var point = points[index];
-      ctx.textAlign = position === 0 ? "left" : position === labelIndexes.length - 1 ? "right" : "center";
-      var text = state.range === "1m"
+      // For "all" range, ensure last label stays inside chart area (not at extreme right edge)
+      var xPos;
+      if (state.range === "all" && position === actualLabelIndexes.length - 1) {
+        // Place last label inside, at least 12px from right edge
+        var plotWidthForLabels = width - 96; // same as layout plotWidth
+        xPos = Math.max(12, Math.min(plotWidthForLabels - 12, point.x));
+        ctx.textAlign = "center";
+      } else {
+        ctx.textAlign = position === 0 ? "left" : position === actualLabelIndexes.length - 1 ? "right" : "center";
+        xPos = point.x;
+      }
+      var text = values.length === 1
+        ? "Nov 23"
+        : state.range === "1d"
+        ? ["9 AM", "12 PM", "3 PM", "6 PM"][position]
+        : state.range === "1m"
         ? ["Nov 1", "Nov 8", "Nov 15", "Nov 22"][position]
         : formatAxisDate(dates[index], state.range);
-      ctx.fillText(text, point.x, height - 12);
+      ctx.fillText(text, xPos, height - 12);
     });
 
     if (state.hovered && state.hoverIndex !== null) {
@@ -216,6 +295,15 @@
       ctx.stroke();
       ctx.restore();
     }
+
+    if (values.length === 1) {
+      state.singlePointNote.textContent =
+        "Only 1 data point so far, more points will appear as you approve receipts.";
+      state.singlePointNote.classList.add("visible");
+    } else {
+      state.singlePointNote.textContent = "";
+      state.singlePointNote.classList.remove("visible");
+    }
   }
 
   function clearHover(state) {
@@ -233,7 +321,7 @@
     if (!state.values.length) return;
     var rect = state.canvas.getBoundingClientRect();
     var cssX = event.clientX - rect.left;
-    var plotWidth = Math.max(1, rect.width - 72);
+    var plotWidth = Math.max(1, rect.width - 96);
     var clampedX = Math.max(0, Math.min(plotWidth, cssX));
     var index = Math.round(clampedX / plotWidth * (state.values.length - 1));
     index = Math.max(0, Math.min(state.values.length - 1, index));
@@ -241,7 +329,9 @@
     state.hovered = true;
 
     if (state.priceElement) state.priceElement.textContent = "$" + state.values[index].toFixed(2);
-    var dates = getDates(state.values.length, state.range);
+    var dates = state.dates && state.dates.length === state.values.length
+      ? state.dates.map(function (date) { return new Date(date + "T12:00:00"); })
+      : getDates(state.values.length, state.range);
     var dateText = formatDate(dates[index], state.range);
     if (state.hoverDateElement) state.hoverDateElement.textContent = dateText;
 
@@ -268,7 +358,9 @@
     state.range = options.range || "1m";
     state.priceElement = options.priceElement || null;
     state.hoverDateElement = options.hoverDateElement || null;
+    state.dates = options.dates || null;
     state.tooltip = state.tooltip || createTooltip(canvas);
+    state.singlePointNote = state.singlePointNote || createSinglePointNote(canvas);
     state.hoverIndex = null;
     state.hovered = false;
     states.set(canvas, state);
@@ -297,13 +389,14 @@
 
   window.PriceTrackerChart = {
     attach: attach,
-    draw: function (canvas, values, range, priceElement, hoverDateElement) {
+    draw: function (canvas, values, range, priceElement, hoverDateElement, dates) {
       attach({
         canvas: canvas,
         values: values,
         range: range,
         priceElement: priceElement,
-        hoverDateElement: hoverDateElement
+        hoverDateElement: hoverDateElement,
+        dates: dates
       });
     }
   };

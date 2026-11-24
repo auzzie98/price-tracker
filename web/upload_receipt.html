@@ -45,6 +45,11 @@
   <script>
     async function loadOptions() {
       const options = await fetch("/api/receipt-options").then(r => r.ok ? r.json() : {models: [], retailers: []});
+      const categoryOrder = {GPUs: 0, CPUs: 1, RAM: 2};
+      options.models.sort((a, b) =>
+        (categoryOrder[a.category] ?? 99) - (categoryOrder[b.category] ?? 99) ||
+        a.model.localeCompare(b.model)
+      );
       document.querySelector("#model-id").innerHTML = options.models.map(p =>
         `<option value="${p.id}">${p.category}: ${p.model}</option>`
       ).join("");

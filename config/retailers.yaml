@@ -8,6 +8,7 @@ retailers:
     base_url: "https://www.amazon.com"
     robots_url: "https://www.amazon.com/robots.txt"
     enabled: true
+    retailer_sold_only: false
     notes: "Retailer sold or retailer fulfilled only. Third party marketplace sellers are skipped. Amazon may block scrapers."
   - id: newegg
     name: Newegg
@@ -86,4 +87,11 @@ retailers:
     base_url: "https://www.abt.com"
     robots_url: "https://www.abt.com/robots.txt"
     enabled: true
+    notes: "Retailer sold only. Third party marketplace sellers are skipped."
+  - id: msi
+    name: MSI US Store
+    base_url: "https://us-store.msi.com"
+    robots_url: "https://us-store.msi.com/robots.txt"
+    enabled: true
+    retailer_sold_only: true
     notes: "Retailer sold only. Third party marketplace sellers are skipped."

@@ -204,6 +204,16 @@ h1 {
   font-size: 12px;
   padding-bottom: 0.35rem;
 }
+.chart-single-point-note {
+  display: none;
+  margin: 0.5rem 0 0;
+  color: #9CA3AF;
+  font-size: 12px;
+  text-align: left;
+}
+.chart-single-point-note.visible {
+  display: block;
+}
 .chart-tooltip {
   position: absolute;
   z-index: 20;
@@ -410,6 +420,17 @@ h1 {
 }
 .retailer-table a:hover {
   color: #FFFFFF;
+}
+
+.median-row {
+  border-top: 1px solid #2D2D2D;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.median-row td {
+  font-weight: bold;
+  color: #00C805;
 }
 .stock-yes {
   color: #00C805;
@@ -627,6 +648,41 @@ h1 {
   background: #1E1E1E;
   border: 1px solid #2D2D2D;
   border-radius: 4px;
+}
+.review-preview {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background: #121212;
+  border: 1px solid #2D2D2D;
+  border-radius: 4px;
+}
+.review-preview p {
+  margin: 0.25rem 0;
+}
+.review-price-edit {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 220px;
+  margin: 0.5rem 0;
+  color: #FFFFFF;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.review-price-edit input {
+  width: 100%;
+  background: #121212;
+  color: #FFFFFF;
+  border: 1px solid #2D2D2D;
+  border-radius: 3px;
+  padding: 0.55rem;
+  font: inherit;
+}
+.review-warning {
+  color: #FF5000;
+  font-weight: 700;
+}
+.review-ready {
+  color: #00C805;
 }
 
 @media (max-width: 900px) {

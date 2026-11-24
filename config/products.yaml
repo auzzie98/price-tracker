@@ -1,24 +1,94 @@
-# Hand picked starting list, v1 prototype.
-# One entry per SKU, matched by manufacturer part number (MPN).
-# Add a product only with its MPN and its exact page URL at each retailer that lists it.
-# Start with 3 products for the prototype, one per retailer test in Task 5 to Task 7,
-# then expand to the full list in Task 11. Do not add 50 products at once.
-# Prices below are examples from the planning doc only, not live prices. Do not treat them as data.
-
 products:
-  - id: asus-dual-rtx5070-12g
-    mpn: "DUAL-RTX5070-12G"
-    brand: "ASUS"
-    model: "Dual RTX 5070 12GB"
+  - id: msi-rtx-5060-ventus-2x-oc
+    mpn: "G5060-8V2C"
+    brand: "Nvidia"
+    model: "MSI Ventus 2X OC RTX 5060"
+    category: "GPUs"
+    chip: "RTX 5060"
+    architecture: "Blackwell"
+    urls:
+      newegg: "https://rtx.live/cards/msi-geforce-rtx-5060-ventus-2x-oc"
+  - id: gigabyte-rtx-5060-ti-windforce-oc-16gb
+    mpn: "GV-N506TWF2OC-16GD"
+    brand: "Gigabyte"
+    model: "Gigabyte Windforce OC RTX 5060 Ti 16GB"
+    category: "GPUs"
+    chip: "RTX 5060 Ti 16GB"
+    architecture: "Blackwell"
+    urls:
+      newegg: "https://rtx.live/cards/gigabyte-geforce-rtx-5060-ti-windforce-overclocked-dual-fan-16gb-gddr7"
+  - id: msi-rtx-5070-ventus-2x-oc
+    mpn: "G5070-12V2C"
+    brand: "Nvidia"
+    model: "MSI Ventus 2X OC RTX 5070"
     category: "GPUs"
     chip: "RTX 5070"
     architecture: "Blackwell"
     urls:
-      newegg: "https://www.newegg.com/asus-dual-tuf-rtx5070-12g-gaming-geforce-rtx-5070-12gb-video-cards-double-fans/p/1FT-000Y-00CS0"
-      bestbuy: "NOT FOUND, no exact DUAL-RTX5070-12G listing found, only PRIME and TUF OC versions"
-      microcenter: "https://www.microcenter.com/product/704211/asus-nvidia-geforce-rtx-5070-dual-fan-12gb-gddr7-pcie-50-graphics-card"
-      bh: "NOT FOUND, no exact DUAL-RTX5070-12G listing found"
-      amazon: "NOT FOUND as retailer sold, only third party listings and the OC version DUAL-RTX5070-O12G"
+      msi: "https://us-store.msi.com/GeForce-RTX-5070-12G-VENTUS-2X-OC"
+  - id: gigabyte-rtx-5070-ti-gaming-oc-16gb
+    mpn: "GV-N507TGAMING OC-16GD"
+    brand: "Gigabyte"
+    model: "Gigabyte Gaming OC RTX 5070 Ti"
+    category: "GPUs"
+    chip: "RTX 5070 Ti"
+    architecture: "Blackwell"
+    urls:
+      bestbuy: "https://www.bestbuy.com/product/gigabyte-nvidia-geforce-rtx-5070-ti-gaming-oc-16g-gddr7-pci-express-5-0-graphics-card-black/J3ZW9X7J5X/sku/6618884"
+  - id: pny-rtx-5080-triple-fan-oc
+    mpn: "VCG508016TFXPB1-O"
+    brand: "PNY"
+    model: "PNY Triple Fan OC RTX 5080"
+    category: "GPUs"
+    chip: "RTX 5080"
+    architecture: "Blackwell"
+    urls:
+      bestbuy: "https://www.bestbuy.com/product/pny-nvidia-geforce-rtx-5080-overclocked-16gb-gddr7-pci-express-5-0-graphics-card-with-triple-fan-black/JXF2C46ZZH/sku/6616903"
+  - id: sapphire-rx-9060-xt-pulse-16gb
+    mpn: "11350-03-20G"
+    brand: "Sapphire"
+    model: "Sapphire Pulse RX 9060 XT 16GB"
+    category: "GPUs"
+    chip: "RX 9060 XT 16GB"
+    architecture: "RDNA 4"
+    urls:
+      newegg: "https://www.newegg.com/sapphire-tech-pulse-11350-03-20g-radeon-rx-9060-xt-16gb-graphics-card-double-fans/p/N82E16814202457"
+  - id: sapphire-rx-9060-xt-pulse-8gb
+    mpn: "11350-04-20G"
+    brand: "Sapphire"
+    model: "Sapphire Pulse RX 9060 XT 8GB"
+    category: "GPUs"
+    chip: "RX 9060 XT 8GB"
+    architecture: "RDNA 4"
+    urls:
+      newegg: "https://www.newegg.com/sapphire-tech-pulse-11350-04-20g-radeon-rx-9060-xt-8gb-graphics-card-double-fans/p/N82E16814202458"
+  - id: sapphire-rx-9070-xt-pulse
+    mpn: "11348-03-20G"
+    brand: "Sapphire"
+    model: "Sapphire Pulse RX 9070 XT"
+    category: "GPUs"
+    chip: "RX 9070 XT"
+    architecture: "RDNA 4"
+    urls:
+      newegg: "https://www.newegg.com/sapphire-tech-pulse-11348-03-20g-radeon-rx-9070-xt-16gb-graphics-card-triple-fans/p/N82E16814202450"
+  - id: asrock-arc-b580-challenger-oc
+    mpn: "B580 CL 12GO"
+    brand: "ASRock"
+    model: "ASRock Challenger OC Arc B580 12GB"
+    category: "GPUs"
+    chip: "Arc B580 12GB"
+    architecture: "Xe"
+    urls:
+      microcenter: "https://www.microcenter.com/product/689223/asrock-intel-arc-b580-challenger-overclocked-dual-fan-12gb-gddr6-pcie-40-graphics-card"
+  - id: asrock-arc-b570-challenger-oc
+    mpn: "B570 CL 10GO"
+    brand: "ASRock"
+    model: "ASRock Challenger OC Arc B570 10GB"
+    category: "GPUs"
+    chip: "Arc B570 10GB"
+    architecture: "Xe"
+    urls:
+      newegg: "https://www.newegg.com/asrock-challenger-b570-cl-10go-arc-b570-10gb-graphics-card-double-fans/p/N82E16814930134"
   - id: amd-ryzen-7-9800x3d
     mpn: "100-100001084WOF"
     brand: "AMD"
@@ -27,21 +97,175 @@ products:
     chip: "Ryzen 7 9800X3D"
     architecture: "Zen 5"
     urls:
-      newegg: "https://www.newegg.com/amd-ryzen-7-9000-series-ryzen-7-9800x3d-granite-ridge-zen-5-socket-am5-desktop-cpu-processor/p/N82E16819113877T"
-      bestbuy: "https://www.bestbuy.com/product/amd-ryzen-7-9800x3d-8-core-16-thread-4-7-ghz-5-2-ghz-max-boost-socket-am5-pci-express-5-0-unlocked-desktop-processor-silver/JXKQHH5XSR"
-      microcenter: "https://www.microcenter.com/quickView/687907/amd-ryzen-7-9800x3d-granite-ridge-am5-470ghz-8-core-boxed-processor-heatsink-not-included"
+      microcenter: "https://www.microcenter.com/product/687907/amd-ryzen-7-9800x3d-granite-ridge-am5-470ghz-8-core-boxed-processor-heatsink-not-included"
       bh: "https://www.bhphotovideo.com/c/product/1859346-REG/amd_100_100001084wof_ryzen_7_9800x3d_am5.html"
-      amazon: "https://www.amazon.com/dp/B0DKFMSMYK"
+  - id: amd-ryzen-5-7600x
+    mpn: "100-100000593WOF"
+    brand: "AMD"
+    model: "Ryzen 5 7600X"
+    category: "CPUs"
+    chip: "Ryzen 5 7600X"
+    architecture: "Zen 4"
+    urls:
+      microcenter: "https://www.microcenter.com/product/674522/amd-ryzen-5-7600x-raphael-am5-47ghz-6-core-boxed-processor-heatsink-not-included"
+  - id: intel-core-i7-14700k
+    mpn: "BX8071514700K"
+    brand: "Intel"
+    model: "Intel Core i7-14700K"
+    category: "CPUs"
+    chip: "Core i7-14700K"
+    architecture: "Raptor Lake"
+    urls:
+      microcenter: "https://www.microcenter.com/product/670842/intel-core-i7-14700k-raptor-lake-34ghz-twenty-core-lga-1700-boxed-processor-heatsink-not-included"
+  - id: amd-ryzen-5-9600x
+    mpn: "100-100001405WOF"
+    brand: "AMD"
+    model: "Ryzen 5 9600X"
+    category: "CPUs"
+    chip: "Ryzen 5 9600X"
+    architecture: "Zen 5"
+    urls:
+      microcenter: "https://www.microcenter.com/product/682196/amd-ryzen-5-9600x-granite-ridge-am5-390ghz-6-core-boxed-processor-heatsink-not-included"
+  - id: amd-ryzen-7-9700x
+    mpn: "100-100001404WOF"
+    brand: "AMD"
+    model: "Ryzen 7 9700X"
+    category: "CPUs"
+    chip: "Ryzen 7 9700X"
+    architecture: "Zen 5"
+    urls:
+      microcenter: "https://www.microcenter.com/product/682199/amd-ryzen-7-9700x-granite-ridge-am5-380ghz-8-core-boxed-processor-heatsink-not-included"
+  - id: amd-ryzen-9-9900x
+    mpn: "100-100000662WOF"
+    brand: "AMD"
+    model: "Ryzen 9 9900X"
+    category: "CPUs"
+    chip: "Ryzen 9 9900X"
+    architecture: "Zen 5"
+    urls:
+      microcenter: "https://www.microcenter.com/product/682198/amd-ryzen-9-9900x-granite-ridge-am5-440ghz-12-core-boxed-processor-heatsink-not-included"
+  - id: amd-ryzen-9-9950x
+    mpn: "100-100001277WOF"
+    brand: "AMD"
+    model: "Ryzen 9 9950X"
+    category: "CPUs"
+    chip: "Ryzen 9 9950X"
+    architecture: "Zen 5"
+    urls:
+      microcenter: "https://www.microcenter.com/product/682197/amd-ryzen-9-9950x-granite-ridge-am5-430ghz-16-core-boxed-processor-heatsink-not-included"
+  - id: intel-core-i5-14600k
+    mpn: "BX8071514600K"
+    brand: "Intel"
+    model: "Intel Core i5-14600K"
+    category: "CPUs"
+    chip: "Core i5-14600K"
+    architecture: "Raptor Lake"
+    urls:
+      bh: "https://www.bhphotovideo.com/c/product/1781465-REG/intel_bx8071514600k_core_i5_14600k_14_core_lga.html/overview"
+  - id: intel-core-ultra-7-265k
+    mpn: "BX80768265K"
+    brand: "Intel"
+    model: "Intel Core Ultra 7 265K"
+    category: "CPUs"
+    chip: "Core Ultra 7 265K"
+    architecture: "Arrow Lake"
+    urls:
+      microcenter: "https://www.microcenter.com/quickView/685301/intel-core-ultra-7-265k-arrow-lake-twenty-core-lga-1851-boxed-processor-heatsink-not-included"
+  - id: intel-core-ultra-9-285k
+    mpn: "BX80768285K"
+    brand: "Intel"
+    model: "Intel Core Ultra 9 285K"
+    category: "CPUs"
+    chip: "Core Ultra 9 285K"
+    architecture: "Arrow Lake"
+    urls:
+      bh: "https://www.bhphotovideo.com/c/product/1840844-REG/intel_bx80768285k_core_ultra_9_285k.html"
+      microcenter: "https://www.microcenter.com/product/685302/intel-core-ultra-9-285k-arrow-lake-24-core-lga-1851-boxed-processor-heatsink-not-included"
   - id: corsair-vengeance-32gb-ddr5-6000-cl30
     mpn: "CMK32GX5M2B6000Z30"
-    brand: "CORSAIR"
-    model: "Vengeance 32GB DDR5-6000 CL30"
+    brand: "Corsair"
+    model: "Corsair Vengeance 32GB DDR5-6000 CL30"
     category: "RAM"
     chip: "DDR5-6000 CL30"
     architecture: "DDR5"
     urls:
-      newegg: "https://www.newegg.com/corsair-vengeance-32gb-ddr5-6000-cas-latency-cl30-desktop-memory-gray/p/N82E16820982040"
-      bestbuy: "https://www.bestbuy.com/product/corsair-vengeance-32gb-2-x-16gb-288-pin-pc-ram-ddr5-6000-pc5-48000-desktop-memory-model-cmk32gx5m2b6000z30-gray/J39QHTCC8W/sku/11244686"
-      microcenter: "NOT FOUND, no exact CMK32GX5M2B6000Z30 listing found"
-      bh: "https://www.bhphotovideo.com/c/product/2008660-REG/corsair_cmk32gx5m2b6000z30_vengence_ddr5_32gb_2x16gb_ddr5_6000.html"
-      amazon: "https://www.amazon.com/dp/B0CBRJ63RT"
+      bh: "https://pctechvault.com/market-watch/corsair-vengeance-32-gb-ddr5-6000-cl30/?component=cpu&region=US&market=new-retail"
+  - id: gskill-trident-z5-neo-rgb-32gb-ddr5-6000-cl30
+    mpn: "F5-6000J3038F16GX2-TZ5NR"
+    brand: "G.Skill"
+    model: "G.Skill Trident Z5 Neo RGB 32GB DDR5-6000 CL30"
+    category: "RAM"
+    chip: "DDR5-6000 CL30"
+    architecture: "DDR5"
+    urls: {}
+  - id: kingston-fury-beast-rgb-32gb-ddr5-5600-cl40
+    mpn: "KF556C40BBAK2-32"
+    brand: "Kingston"
+    model: "Kingston Fury Beast RGB 32GB DDR5-5600 CL40"
+    category: "RAM"
+    chip: "DDR5-5600 CL40"
+    architecture: "DDR5"
+    urls: {}
+  - id: corsair-vengeance-16gb-ddr5-6000-cl36
+    mpn: "CMK16GX5M2E6000Z36"
+    brand: "Corsair"
+    model: "Corsair Vengeance 16GB DDR5-6000 CL36"
+    category: "RAM"
+    chip: "DDR5-6000 CL36"
+    architecture: "DDR5"
+    urls:
+      bestbuy: "https://www.bestbuy.com/product/corsair-vengeance-16gb-2-x-8gb-288-pin-pc-ram-ddr5-6000-pc5-48000-desktop-memory-model-cmk16gx5m2e6000z36-gray/J39TSC9G2G/sku/12215045"
+  - id: gskill-ripjaws-s5-32gb-ddr5-6000-cl30
+    mpn: "F5-6000J3040F16GX2-RS5K"
+    brand: "G.Skill"
+    model: "G.Skill Ripjaws S5 32GB DDR5-6000 CL30"
+    category: "RAM"
+    chip: "DDR5-6000 CL30"
+    architecture: "DDR5"
+    urls:
+      bestbuy: "https://www.bestbuy.com/product/g-skill-ripjaws-s5-32gb-ddr5-6000mhz-ram-2x16gb-pc5-48000-black/J36V4SLTPX/sku/11247671"
+  - id: kingston-fury-beast-16gb-ddr5-5200-cl40
+    mpn: "KF552C40BBK2-16"
+    brand: "Kingston"
+    model: "Kingston Fury Beast 16GB DDR5-5200 CL40"
+    category: "RAM"
+    chip: "DDR5-5200 CL40"
+    architecture: "DDR5"
+    urls:
+      amazon: "https://memradar.com/ram/kingston-fury-beast-16gb-5200mhz/"
+  - id: corsair-dominator-platinum-rgb-32gb-ddr5-6400-cl32
+    mpn: "CMT32GX5M2B6400C32"
+    brand: "Corsair"
+    model: "Corsair Dominator Platinum RGB 32GB DDR5-6400 CL32"
+    category: "RAM"
+    chip: "DDR5-6400 CL32"
+    architecture: "DDR5"
+    urls:
+      newegg: "https://www.newegg.com/p/pl?N=100006650&d=corsair dominator platinum rgb ddr5 32gb"
+  - id: gskill-trident-z5-rgb-64gb-ddr5-6000-cl36
+    mpn: "F5-6000J3636F32GX2-TZ5RK"
+    brand: "G.Skill"
+    model: "G.Skill Trident Z5 RGB 64GB DDR5-6000 CL36"
+    category: "RAM"
+    chip: "DDR5-6000 CL36"
+    architecture: "DDR5"
+    urls:
+      bestbuy: "https://www.bestbuy.com/product/g-skill-trident-z5-rgb-64gb-ddr5-6000mhz-ram-2x32gb-black/J36V4SLKH4/sku/12528223"
+  - id: teamgroup-t-force-delta-rgb-32gb-ddr5-6000-cl38
+    mpn: "FF3D532G6000HC38ADC01"
+    brand: "TeamGroup"
+    model: "TeamGroup T-Force Delta RGB 32GB DDR5-6000 CL38"
+    category: "RAM"
+    chip: "DDR5-6000 CL38"
+    architecture: "DDR5"
+    urls:
+      newegg: "https://www.newegg.com/p/pl?N=100007611&d=teamgroup t-force delta rgb ddr5 ram"
+  - id: crucial-pro-32gb-ddr5-5600-cl46
+    mpn: "CP2K16G56C46U5"
+    brand: "Crucial"
+    model: "Crucial Pro 32GB DDR5-5600 CL46"
+    category: "RAM"
+    chip: "DDR5-5600 CL46"
+    architecture: "DDR5"
+    urls:
+      bestbuy: "https://www.bestbuy.com/product/crucial-pro-32gb-2x16gb-ddr5-5600mhz-c46-udimm-desktop-memory-black/JX8PSKC792"

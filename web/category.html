@@ -22,12 +22,12 @@
     <section class="category-heading">
       <h1 id="category-title">Category: CPUs</h1>
       <p id="category-subtitle">Mock price trends for 3 tracked GPU models.</p>
-      <p class="mock-label">Data is mock for demonstration purposes.</p>
+      <p class="mock-label">Real data, baseline Nov 23, 2026, Black Friday week snapshot.</p>
     </section>
 
     <section class="trend-section category-trend">
       <h2 class="trend-title">Trend</h2>
-      <p class="trend-subtitle">Price change vs the start of the selected period.</p>
+      <p class="trend-subtitle">Price in dollars for the selected model.</p>
         <div class="trend-legend">
           <div class="trend-model-name" id="trend-model-name">Category Trend</div>
           <div class="trend-price-row">
@@ -52,7 +52,6 @@
     </section>
   </main>
 
-  <script src="/static/js/mock-data.js"></script>
   <script src="/static/js/chart.js"></script>
   <script>
     var params = new URLSearchParams(window.location.search);
@@ -63,24 +62,49 @@
     var categoryName = params.get('cat') || params.get('category') || pathCategory || 'CPUs';
     if (!['GPUs', 'CPUs', 'RAM'].includes(categoryName)) categoryName = 'CPUs';
     var selectedRange = '1m';
+    var liveCategoryValues = null;
+    var liveCategoryDates = null;
+
+    fetch('/api/catalog')
+      .then(function(response) { return response.ok ? response.json() : null; })
+      .then(function(data) {
+        if (!data || !data.products) return;
+        var categoryProducts = data.products.filter(function(product) {
+          return product.category === categoryName;
+        });
+        var selectedProduct = categoryProducts.find(function(product) {
+          return product.price_cents !== null;
+        }) || categoryProducts[0];
+        if (!selectedProduct) return;
+        document.getElementById('trend-model-name').textContent = selectedProduct.model;
+        var price = selectedProduct.price_cents === null
+          ? 'No data yet'
+          : '$' + (selectedProduct.price_cents / 100).toFixed(2);
+        document.getElementById('trend-price').textContent = price;
+        if (selectedProduct.price_cents === null) {
+          liveCategoryValues = [];
+          liveCategoryDates = [];
+          drawCategoryChart();
+          return;
+        }
+        fetch('/api/products/' + encodeURIComponent(selectedProduct.id) + '/history')
+          .then(function(response) { return response.ok ? response.json() : null; })
+          .then(function(history) {
+            if (!history || !history.history) return;
+            liveCategoryValues = history.history.map(function(row) {
+              return row.median_price_dollars;
+            });
+            liveCategoryDates = history.history.map(function(row) { return row.date; });
+            drawCategoryChart();
+          })
+          .catch(function() {});
+      })
+      .catch(function() {});
 
     document.querySelector('.category-nav-' + categoryName.toLowerCase()).classList.add('active');
     document.getElementById('category-title').textContent = 'Category: ' + categoryName;
     document.getElementById('category-subtitle').textContent =
       'Mock price trends for 3 tracked ' + (categoryName === 'RAM' ? 'RAM' : categoryName) + ' models.';
-
-    var products = window.mockCatalog.getByCategory(categoryName);
-
-    function getCategoryHistory(range) {
-      var length = products[0].histories[range].length;
-      var result = [];
-      for (var i = 0; i < length; i++) {
-        var sum = 0;
-        products.forEach(function(product) { sum += product.histories[range][i]; });
-        result.push(Math.round(sum / products.length * 100) / 100);
-      }
-      return result;
-    }
 
     function drawCategoryChart() {
       var canvas = document.getElementById('category-chart');
@@ -94,7 +118,14 @@
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, width, height);
 
-      var values = getCategoryHistory(selectedRange);
+      var values = liveCategoryValues || [];
+      if (!values.length) {
+        ctx.fillStyle = '#9CA3AF';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data yet', width / 2, height / 2);
+        return;
+      }
       var min = Math.min.apply(null, values);
       var max = Math.max.apply(null, values);
       var padding = (max - min || Math.abs(max) * 0.1) * 0.05;
@@ -148,59 +179,91 @@
           values,
           selectedRange,
           document.getElementById('trend-price'),
-          document.getElementById('trend-hover-date')
+          document.getElementById('trend-hover-date'),
+          liveCategoryDates
         );
       }
     }
 
     var list = document.getElementById('category-model-list');
-    products.forEach(function(product) {
-      var row = document.createElement('div');
-      row.className = 'model-row';
-      row.innerHTML =
-        '<a class="model-name" href="/product/' + product.id + '">' + product.name + '</a>' +
-        '<span class="model-price">$' + product.price.toFixed(2) + '</span>' +
-        '<span class="model-change ' + (product.change >= 0 ? 'change-positive' : 'change-negative') + '">' +
-        (product.change >= 0 ? '+' : '') + product.change.toFixed(1) + '%</span>' +
-        '<div class="model-sparkline"><canvas data-model="' + product.id + '" width="80" height="30"></canvas></div>';
-      list.appendChild(row);
-    });
-
-    function drawSparklines() {
-      document.querySelectorAll('.model-sparkline canvas').forEach(function(canvas) {
-        var product = window.mockCatalog.getById(canvas.dataset.model);
-        var values = product.histories[selectedRange];
-        var width = 80;
-        var height = 30;
-        var dpr = window.devicePixelRatio || 1;
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        var ctx = canvas.getContext('2d');
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.fillStyle = '#121212';
-        ctx.fillRect(0, 0, width, height);
-        var min = Math.min.apply(null, values);
-        var max = Math.max.apply(null, values);
-        var range = max - min || Math.abs(max) * 0.1;
-        var chartMin = min - range * 0.05;
-        var chartMax = max + range * 0.05;
-        var start = Math.round(values[0] * 100);
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        for (var i = 0; i < values.length - 1; i++) {
-          var x1 = i / (values.length - 1) * width;
-          var x2 = (i + 1) / (values.length - 1) * width;
-          var y1 = 2 + (chartMax - values[i]) / (chartMax - chartMin) * 26;
-          var y2 = 2 + (chartMax - values[i + 1]) / (chartMax - chartMin) * 26;
-          var end = Math.round(values[i + 1] * 100);
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.strokeStyle = end > start ? '#FF5000' : '#00C805';
-          ctx.stroke();
-        }
-      });
-    }
+    fetch('/api/catalog')
+      .then(function(response) { return response.ok ? response.json() : null; })
+      .then(function(data) {
+        if (!data) return;
+        list.innerHTML = '';
+        data.products.filter(function(product) {
+          return product.category === categoryName;
+        }).forEach(function(product) {
+          var row = document.createElement('div');
+          row.className = 'model-row';
+          var price = product.price_cents === null
+            ? 'No data yet'
+            : '$' + (product.price_cents / 100).toFixed(2);
+          row.innerHTML =
+            '<a class="model-name" href="/product/' + product.id + '">' + product.model + '</a>' +
+            '<span class="model-price">' + price + '</span>' +
+            '<span class="model-change">0.0%</span>' +
+            '<div class="model-sparkline"><canvas data-model="' + product.id + '" width="80" height="30"></canvas></div>';
+          list.appendChild(row);
+          var canvas = row.querySelector('canvas');
+          if (product.price_cents === null) {
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#121212';
+            ctx.fillRect(0, 0, 80, 30);
+          } else {
+            fetch('/api/products/' + encodeURIComponent(product.id) + '/history')
+              .then(function(response) { return response.ok ? response.json() : null; })
+              .then(function(history) {
+                if (!history || !history.history || history.history.length === 0) return;
+                var values = history.history.map(function(point) { return point.median_price_dollars; });
+                var width = 80;
+                var height = 30;
+                var dpr = window.devicePixelRatio || 1;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                var ctx = canvas.getContext('2d');
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctx.fillStyle = '#121212';
+                ctx.fillRect(0, 0, width, height);
+                var min = Math.min.apply(null, values);
+                var max = Math.max.apply(null, values);
+                var spread = max - min || Math.abs(max) * 0.1 || 1;
+                var chartMin = min - spread * 0.05;
+                var chartMax = max + spread * 0.05;
+                var startCents = Math.round(values[0] * 100);
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'butt';
+                ctx.lineJoin = 'miter';
+                for (var i = 0; i < values.length - 1; i++) {
+                  var x1 = i / (values.length - 1) * width;
+                  var x2 = (i + 1) / (values.length - 1) * width;
+                  var y1 = 2 + (chartMax - values[i]) / (chartMax - chartMin) * 26;
+                  var y2 = 2 + (chartMax - values[i + 1]) / (chartMax - chartMin) * 26;
+                  var endCents = Math.round(values[i + 1] * 100);
+                  ctx.beginPath();
+                  ctx.moveTo(x1, y1);
+                  ctx.lineTo(x2, y2);
+                  ctx.strokeStyle = endCents < startCents ? '#00C805' : '#FF5000';
+                  ctx.stroke();
+                }
+                if (values.length === 1) {
+                  var y = 2 + (chartMax - values[0]) / (chartMax - chartMin) * 26;
+                  ctx.beginPath();
+                  ctx.moveTo(0, y);
+                  ctx.lineTo(width, y);
+                  ctx.strokeStyle = '#9CA3AF';
+                  ctx.stroke();
+                  ctx.beginPath();
+                  ctx.arc(width - 4, y, 3, 0, Math.PI * 2);
+                  ctx.fillStyle = '#FF5000';
+                  ctx.fill();
+                }
+              })
+              .catch(function() {});
+          }
+        });
+      })
+      .catch(function() {});
 
     document.querySelectorAll('.time-toggles .toggle').forEach(function(button) {
       button.addEventListener('click', function() {
@@ -208,15 +271,12 @@
         button.classList.add('active');
         selectedRange = button.dataset.range;
         drawCategoryChart();
-        drawSparklines();
       });
     });
 
     drawCategoryChart();
-    drawSparklines();
     window.addEventListener('resize', function() {
       drawCategoryChart();
-      drawSparklines();
     });
   </script>
 </body>

@@ -81,6 +81,10 @@
             <p><strong>Model:</strong> ${escapeText(s.model_name)} (${escapeText(s.model_id)})</p>
             <p><strong>Retailer:</strong> ${escapeText(s.retailer)}</p>
             <p><strong>Suggested price:</strong> ${s.suggested_price_cents === null ? "Not found" : "$" + (s.suggested_price_cents / 100).toFixed(2)}</p>
+            ${s.status === "pending" ? `
+              <label class="review-price-edit">Final price
+                <input type="number" min="0.01" step="0.01" value="${s.suggested_price_cents === null ? "" : (s.suggested_price_cents / 100).toFixed(2)}" data-price-input>
+              </label>` : ""}
             <p><strong>Date submitted:</strong> ${escapeText(s.created_at)}</p>
             <p><strong>Status:</strong> ${escapeText(s.status)}</p>
             <p><strong>OCR text:</strong></p>
@@ -124,6 +128,52 @@
         '<option value="all">All models</option>' +
         models.map(([id, name]) => `<option value="${escapeText(id)}">${escapeText(name)}</option>`).join("");
       render();
+      await loadPreviews();
+    }
+
+    async function loadPreviews() {
+      const cards = document.querySelectorAll(".review-card");
+      for (const card of cards) {
+        const response = await fetch(`/api/receipt-submissions/${card.dataset.id}/preview`);
+        if (!response.ok) continue;
+        const preview = await response.json();
+        const model = preview.matched_model;
+        const price = preview.price_cents === null
+          ? "Not found"
+          : "$" + (preview.price_cents / 100).toFixed(2);
+        const oldMedian = preview.old_median_cents === null
+          ? "No data yet"
+          : "$" + (preview.old_median_cents / 100).toFixed(2);
+        const newMedian = preview.new_median_cents === null
+          ? "Not found"
+          : "$" + (preview.new_median_cents / 100).toFixed(2);
+        const warning = preview.block_reason
+          ? `<p class="review-warning"><strong>Check:</strong> ${escapeText(preview.block_reason)}</p>`
+          : '<p class="review-warning review-ready"><strong>Match:</strong> OCR model matches the catalog.</p>';
+        const sellerWarning = preview.seller_warning
+          ? `<p class="review-warning"><strong>Seller:</strong> ${escapeText(preview.seller_warning)}</p>`
+          : "";
+        const priceWarning = preview.price_warning
+          ? `<p class="review-warning"><strong>Price:</strong> ${escapeText(preview.price_warning)}</p>`
+          : "";
+        const previewHtml =
+          `<div class="review-preview">` +
+          `<p><strong>This will update:</strong> ${escapeText(model ? model.model : "No match")}, ` +
+          `${escapeText(model ? model.category : "Needs manual check")}, retailer ${escapeText(preview.retailer_id)}, price ${price}</p>` +
+          `<p><strong>Median:</strong> ${oldMedian} to ${newMedian}</p>` +
+          warning +
+          sellerWarning +
+          priceWarning +
+          `</div>`;
+        card.querySelector(".review-details").insertAdjacentHTML("afterbegin", previewHtml);
+        if (preview.status === "blocked" && card.dataset.id) {
+          const approve = card.querySelector('[data-action="approve"]');
+          if (approve) {
+            approve.disabled = true;
+            approve.title = preview.block_reason || "Needs manual check";
+          }
+        }
+      }
     }
 
     document.querySelector(".review-filters").addEventListener("change", render);
@@ -133,6 +183,31 @@
       if (!button) return;
       document.querySelector("#status-filter").value = button.dataset.status;
       render();
+    });
+    document.querySelector("#submissions").addEventListener("change", async event => {
+      const input = event.target.closest("[data-price-input]");
+      if (!input) return;
+      const article = input.closest(".review-card");
+      const dollars = Number(input.value);
+      if (!Number.isFinite(dollars) || dollars <= 0) {
+        alert("Price must be greater than zero");
+        return;
+      }
+      const cents = Math.round(dollars * 100);
+      const response = await fetch(
+        `/api/receipt-submissions/${article.dataset.id}/price`,
+        {
+          method: "POST",
+          headers: {"Content-Type": "application/x-www-form-urlencoded"},
+          body: `price_cents=${encodeURIComponent(cents)}`
+        }
+      );
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.detail || "Could not update price");
+        return;
+      }
+      await loadSubmissions();
     });
     document.querySelector("#submissions").addEventListener("click", async event => {
       const button = event.target.closest("button");

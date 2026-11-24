@@ -32,10 +32,15 @@ app = FastAPI()
 
 def get_product_options():
     from price_tracker.config import load_products
-    return [
+    products = [
         (product["id"], product["model"], product["category"])
         for product in load_products()
     ]
+    category_order = {"GPUs": 0, "CPUs": 1, "RAM": 2}
+    return sorted(
+        products,
+        key=lambda item: (category_order.get(item[2], 99), item[1].lower()),
+    )
 
 
 def get_retailer_options():
@@ -43,11 +48,114 @@ def get_retailer_options():
     return [(retailer["id"], retailer["name"]) for retailer in load_retailers()]
 
 
+def retailer_is_sold_only(retailer_id):
+    from price_tracker.config import load_retailers
+    for retailer in load_retailers():
+        if retailer["id"] == retailer_id:
+            return retailer.get("retailer_sold_only", True)
+    return False
+
+
 def extract_suggested_price(text):
     match = PRICE_PATTERN.search(text)
     if not match:
         return None
     return int(round(float(match.group(1).replace(",", "")) * 100))
+
+
+def receipt_preview(submission_id):
+    from price_tracker.receipt import parse_receipt
+    conn = __import__("sqlite3").connect(str(DB_PATH))
+    conn.row_factory = __import__("sqlite3").Row
+    try:
+        row = conn.execute(
+            """SELECT id, model_id, retailer, photo_path, ocr_text,
+                      suggested_price_cents, status, created_at
+               FROM receipt_submissions WHERE id = ?""",
+            (submission_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
+        data = parse_receipt(row["ocr_text"], row["model_id"], row["retailer"])
+        matched_id = data["extracted_model_id"] or row["model_id"]
+        matched_model = conn.execute(
+            "SELECT id, model, category FROM skus WHERE id = ?", (matched_id,)
+        ).fetchone()
+        old_median = conn.execute(
+            """SELECT median_price_cents FROM sku_prices
+               WHERE sku_id = ? ORDER BY period DESC LIMIT 1""",
+            (matched_id,),
+        ).fetchone()
+        price_cents = row["suggested_price_cents"] or data["extracted_price_cents"]
+        new_median = None
+        if price_cents:
+            period_rows = conn.execute(
+                """SELECT price_cents FROM observations
+                   WHERE sku_id = ? AND in_stock = 1""",
+                (matched_id,),
+            ).fetchall()
+            prices = [item[0] for item in period_rows] + [price_cents]
+            prices.sort()
+            count = len(prices)
+            new_median = prices[count // 2] if count % 2 else (
+                prices[count // 2 - 1] + prices[count // 2]
+            ) // 2
+            current_median = prices[:-1]
+            current_median.sort()
+            current_count = len(current_median)
+            old_median_preview = (
+                current_median[current_count // 2]
+                if current_count % 2
+                else (
+                    current_median[current_count // 2 - 1]
+                    + current_median[current_count // 2]
+                ) // 2
+                if current_count
+                else None
+            )
+    finally:
+        conn.close()
+
+    return {
+        "submission_id": submission_id,
+        "ocr": data,
+        "matched_model": dict(matched_model) if matched_model else None,
+        "picked_model_id": row["model_id"],
+        "retailer_id": row["retailer"],
+        "price_cents": price_cents,
+        "old_median_cents": old_median_preview if price_cents else (old_median[0] if old_median else None),
+        "new_median_cents": new_median,
+        "third_party": data["third_party"],
+        "seller_name": data["seller_name"],
+        "seller_warning": "Seller not found in photo, please check"
+        if not data["seller_name"]
+        else None,
+        "status": (
+            "blocked"
+            if data["third_party"]
+            or data["match_status"] in ("no_match", "mismatch")
+            else "ready"
+        ),
+        "price_warning": (
+            "Price looks high, check it"
+            if old_median_preview
+            and price_cents
+            and price_cents > old_median_preview * 1.20
+            else None
+        ),
+        "block_reason": (
+            f"Third party seller, do not count: {data['seller_name']}"
+            if data["third_party"]
+            else "No match in the current catalog, Needs manual check"
+            if data["match_status"] == "no_match"
+            else (
+                f"OCR says {data['extracted_model_name']}, "
+                f"you picked {data['picked_model_name']}, these do not match."
+                if data["match_status"] == "mismatch"
+                else None
+            )
+        ),
+    }
 
 @app.get("/api/health")
 def health():
@@ -65,7 +173,8 @@ def api_indexes():
     for category in ["CPUs", "GPUs", "RAM"]:
         category_rows = [r for r in rows if r[0] == category]
         if category_rows:
-            result["categories"].append({"category": category, "index_value": category_rows[0][2], "skus_used": category_rows[0][3]})
+            latest = max(category_rows, key=lambda row: row[1])
+            result["categories"].append({"category": category, "index_value": latest[2], "skus_used": latest[3]})
         else:
             result["categories"].append({"category": category, "index_value": 100.0, "skus_used": 0})
     return result
@@ -110,6 +219,82 @@ def api_product(sku: str):
     for period, median_price_cents in rows:
         price_points.append({"period": period, "price_cents": median_price_cents, "price_dollars": median_price_cents / 100})
     return {"sku": sku, "price_points": price_points, "count": len(price_points)}
+
+@app.get("/api/products/{model_id}/retailer-prices")
+def product_retailer_prices(model_id: str):
+    from price_tracker.db import connect
+    import sqlite3
+    db_path = str(DB_PATH)
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(
+            """SELECT retailer_id, price_cents, in_stock, observed_at
+               FROM observations
+               WHERE sku_id = ?
+               ORDER BY observed_at DESC""",
+            (model_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    result = []
+    for row in rows:
+        retailer = conn.execute(
+            "SELECT name, base_url FROM retailers WHERE id = ?", (row["retailer_id"],)
+        ).fetchone()
+        if retailer:
+            # Build the exact product page URL from config
+            # Look up the product URLs from config
+            from price_tracker.config import load_products
+            configured = {product["id"]: product for product in load_products()}
+            product_url = None
+            if model_id in configured:
+                product_urls = configured[model_id].get("urls", {})
+                product_url = product_urls.get(retailer["id"])
+            result.append({
+                "retailer_name": retailer["name"],
+                "price_dollars": row["price_cents"] / 100 if row["price_cents"] is not None else None,
+                "in_stock": bool(row["in_stock"]),
+                "source_url": row["source_url"],
+                "product_url": product_url,
+            })
+    return {"retailer_prices": result}
+
+@app.get("/api/products/{model_id}/history")
+def api_product_history(model_id: str):
+    conn = __import__("sqlite3").connect(str(DB_PATH))
+    conn.row_factory = __import__("sqlite3").Row
+    try:
+        model = conn.execute(
+            "SELECT id, brand, model, category, mpn FROM skus WHERE id = ?",
+            (model_id,),
+        ).fetchone()
+        if not model:
+            raise HTTPException(status_code=404, detail=f"Model not found: {model_id}")
+        rows = conn.execute(
+            """SELECT sp.period, sp.median_price_cents, sp.retailers_used
+               FROM sku_prices sp
+               WHERE sp.sku_id = ?
+               ORDER BY sp.period ASC""",
+            (model_id,),
+        ).fetchall()
+        point_rows = [dict(row) for row in rows]
+    finally:
+        conn.close()
+    return {
+        "model": dict(model),
+        "history": [
+            {
+                "date": row["period"],
+                "median_price_cents": row["median_price_cents"],
+                "median_price_dollars": row["median_price_cents"] / 100,
+                "retailers_used": row["retailers_used"],
+            }
+            for row in point_rows
+        ],
+        "count": len(point_rows),
+        "data_label": "Real data, baseline Nov 23, 2026, Black Friday week snapshot",
+    }
 
 @app.get("/api/movers")
 def api_movers():
@@ -200,6 +385,27 @@ async def upload_receipt(
         "date": receipt_date,
     }
 
+@app.get("/api/receipt-submissions/{submission_id}/preview")
+def receipt_submission_preview(submission_id: int):
+    return receipt_preview(submission_id)
+
+@app.post("/api/receipt-submissions/{submission_id}/price")
+def update_receipt_price(submission_id: int, price_cents: int = Form(...)):
+    conn = __import__("sqlite3").connect(str(DB_PATH))
+    try:
+        if price_cents <= 0:
+            raise HTTPException(status_code=400, detail="Price must be greater than zero")
+        result = conn.execute(
+            "UPDATE receipt_submissions SET suggested_price_cents = ? WHERE id = ?",
+            (price_cents, submission_id),
+        )
+        conn.commit()
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found")
+    finally:
+        conn.close()
+    return receipt_preview(submission_id)
+
 @app.get("/review", include_in_schema=False)
 def review_page():
     return page_response("review.html")
@@ -242,6 +448,17 @@ def receipt_submissions():
 
 @app.post("/api/receipt-submissions/{submission_id}/approve")
 def approve_submission(submission_id: int):
+    preview = receipt_preview(submission_id)
+    if preview["status"] == "blocked":
+        raise HTTPException(status_code=400, detail=preview["block_reason"])
+    if preview["ocr"]["match_status"] != "match":
+        raise HTTPException(
+            status_code=400,
+            detail=preview["block_reason"] or "Model and OCR text do not match",
+        )
+    if preview["ocr"]["stock_status"] == "out_of_stock":
+        raise HTTPException(status_code=400, detail="OCR text says out of stock")
+
     conn = __import__("sqlite3").connect(str(DB_PATH))
     try:
         row = conn.execute(
@@ -261,6 +478,7 @@ def approve_submission(submission_id: int):
                 detail=f"Submission {submission_id} is {existing[0]}, not pending",
             )
         model_id, retailer_id, photo_path, price_cents = row
+        model_id = preview["ocr"]["extracted_model_id"] or model_id
         if price_cents is None:
             print(
                 f"Approve submission {submission_id} rejected: "
@@ -292,6 +510,22 @@ def approve_submission(submission_id: int):
                 flush=True,
             )
             raise HTTPException(status_code=400, detail=f"Unknown model id: {model_id}")
+
+        if preview["third_party"]:
+            retailer_name = conn.execute(
+                "SELECT name FROM retailers WHERE id = ?", (retailer_id,)
+            ).fetchone()
+            retailer_label = retailer_name[0] if retailer_name else retailer_id
+            seller_label = preview["seller_name"] or "Unknown seller"
+            print(
+                f"Approve submission {submission_id} rejected: "
+                f"seller {seller_label}, retailer {retailer_label}",
+                flush=True,
+            )
+            raise HTTPException(
+                status_code=400,
+                detail=f"Blocked: Seller found is {seller_label}, retailer is {retailer_label}",
+            )
 
         retailer = conn.execute(
             "SELECT id FROM retailers WHERE id = ?", (retailer_id,)
@@ -334,7 +568,33 @@ def approve_submission(submission_id: int):
     )
     if result.returncode != 0:
         raise HTTPException(status_code=500, detail=result.stderr or "Derived rebuild failed")
-    return {"status": "approved", "submission_id": submission_id}
+
+    conn = __import__("sqlite3").connect(str(DB_PATH))
+    try:
+        model_row = conn.execute(
+            """SELECT median_price_cents FROM sku_prices
+               WHERE sku_id = ? ORDER BY period DESC LIMIT 1""",
+            (model_id,),
+        ).fetchone()
+        category_row = conn.execute(
+            "SELECT category FROM skus WHERE id = ?", (model_id,)
+        ).fetchone()
+        index_row = None
+        if category_row:
+            index_row = conn.execute(
+                """SELECT index_value FROM index_values
+                   WHERE category = ? ORDER BY period DESC LIMIT 1""",
+                (category_row[0],),
+            ).fetchone()
+    finally:
+        conn.close()
+    return {
+        "status": "approved",
+        "submission_id": submission_id,
+        "new_median_price_cents": model_row[0] if model_row else None,
+        "new_median_price_dollars": model_row[0] / 100 if model_row else None,
+        "new_index_value": index_row[0] if index_row else None,
+    }
 
 @app.post("/api/receipt-submissions/{submission_id}/reject")
 def reject_submission(submission_id: int):
@@ -481,6 +741,35 @@ def reset_submission_to_pending(submission_id: int):
 @app.get("/api/retailers")
 def retailers_api():
     return {"retailers": [{"id": item_id, "name": name} for item_id, name in get_retailer_options()]}
+
+@app.get("/api/catalog")
+def catalog_api():
+    from price_tracker.config import load_products
+    from price_tracker.db import connect
+    conn = connect(DB_PATH)
+    conn.row_factory = __import__("sqlite3").Row
+    try:
+        products = []
+        for product in load_products():
+            row = conn.execute(
+                """SELECT median_price_cents, period
+                   FROM sku_prices WHERE sku_id = ?
+                   ORDER BY period DESC LIMIT 1""",
+                (product["id"],),
+            ).fetchone()
+            products.append({
+                "id": product["id"],
+                "mpn": product["mpn"],
+                "brand": product["brand"],
+                "model": product["model"],
+                "category": product["category"],
+                "chip": product["chip"],
+                "price_cents": row["median_price_cents"] if row else None,
+                "period": row["period"] if row else None,
+            })
+    finally:
+        conn.close()
+    return {"products": products}
 
 @app.get("/api/receipt-options")
 def receipt_options_api():

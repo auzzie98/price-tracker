@@ -105,9 +105,13 @@ def build_index_values(conn: sqlite3.Connection) -> None:
     Safe to rerun: uses INSERT OR REPLACE, so no duplicate rows.
     Each new period adds one row per category and leaves old rows alone.
     """
-    categories = [
-        r[0] for r in conn.execute("SELECT DISTINCT category FROM skus").fetchall()
-    ]
+    from price_tracker.config import load_products
+
+    configured = {
+        product["id"]: product["category"]
+        for product in load_products()
+    }
+    categories = ["GPUs", "CPUs", "RAM"]
 
     for category in categories:
         skus = [
@@ -115,6 +119,7 @@ def build_index_values(conn: sqlite3.Connection) -> None:
             for r in conn.execute(
                 "SELECT id FROM skus WHERE category = ?", (category,)
             ).fetchall()
+            if r[0] in configured
         ]
 
         if not skus:

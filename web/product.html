@@ -22,12 +22,12 @@
     <section class="product-heading">
       <h1 id="product-title">Product</h1>
       <p id="product-meta"></p>
-      <p class="mock-label">Data is mock for demonstration purposes.</p>
+      <p class="mock-label">Real data, baseline Nov 23, 2026, Black Friday week snapshot.</p>
     </section>
 
     <section class="trend-section product-trend">
       <h2 class="trend-title">Trend</h2>
-      <p class="trend-subtitle">Price change vs the start of the selected period.</p>
+      <p class="trend-subtitle">Price in dollars for the selected model.</p>
       <div class="trend-legend">
         <div class="trend-model-name" id="trend-model-name">Product</div>
         <div class="trend-price-row">
@@ -56,18 +56,47 @@
     </section>
   </main>
 
-  <script src="/static/js/mock-data.js"></script>
   <script src="/static/js/chart.js"></script>
   <script>
     var pathParts = window.location.pathname.split('/').filter(Boolean);
     var productId = pathParts[pathParts.length - 1] || 'asus-dual-rtx5070-12g';
-    var product = window.mockCatalog.getById(productId) || window.mockCatalog.products[0];
     var selectedRange = '1m';
+    var liveValues = null;
+    var liveDates = null;
 
-    document.title = product.name + ' - Price Tracker';
-    document.getElementById('product-title').textContent = product.name;
-    document.getElementById('product-meta').textContent =
-      'MPN ' + product.mpn + ' | ' + product.category + ' | Retailers used: ' + product.retailers.length;
+    fetch('/api/products/' + encodeURIComponent(productId) + '/history')
+      .then(function(response) { return response.ok ? response.json() : null; })
+      .then(function(data) {
+        if (!data || !data.history.length) {
+          document.getElementById('trend-price').textContent = 'No data yet';
+          document.getElementById('trend-model-name').textContent = data && data.model ? data.model.model : 'Product';
+          liveValues = [];
+          liveDates = [];
+          drawProductChart();
+          return;
+        }
+        liveValues = data.history.map(function(point) { return point.median_price_dollars; });
+        liveDates = data.history.map(function(point) { return point.date; });
+        document.title = data.model.model + ' - Price Tracker';
+        document.getElementById('product-title').textContent = data.model.model;
+        document.getElementById('product-meta').textContent =
+          'MPN ' + data.model.mpn + ' | ' + data.model.category;
+        drawProductChart();
+      })
+      .catch(function() {});
+
+    fetch('/api/catalog')
+      .then(function(response) { return response.ok ? response.json() : null; })
+      .then(function(data) {
+        if (!data) return;
+        var catalogProduct = data.products.find(function(item) { return item.id === productId; });
+        if (!catalogProduct) return;
+        document.title = catalogProduct.model + ' - Price Tracker';
+        document.getElementById('product-title').textContent = catalogProduct.model;
+        document.getElementById('product-meta').textContent =
+          'MPN ' + catalogProduct.mpn + ' | ' + catalogProduct.category;
+      })
+      .catch(function() {});
 
     function drawProductChart() {
       var canvas = document.getElementById('product-chart');
@@ -81,7 +110,14 @@
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, width, height);
 
-      var values = product.histories[selectedRange];
+      var values = liveValues || [];
+      if (!values.length) {
+        ctx.fillStyle = '#9CA3AF';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data yet', width / 2, height / 2);
+        return;
+      }
       var min = Math.min.apply(null, values);
       var max = Math.max.apply(null, values);
       var padding = (max - min || Math.abs(max) * 0.1) * 0.05;
@@ -135,22 +171,50 @@
           values,
           selectedRange,
           document.getElementById('trend-price'),
-          document.getElementById('trend-hover-date')
+          document.getElementById('trend-hover-date'),
+          liveDates
         );
       }
     }
 
     var retailerRows = document.getElementById('retailer-rows');
-    product.retailers.forEach(function(retailer, index) {
-      var row = document.createElement('tr');
-      var price = product.price + ((index % 3) - 1) * 5;
-      row.innerHTML =
-        '<td>' + retailer + '</td>' +
-        '<td>$' + price.toFixed(2) + '</td>' +
-        '<td><span class="stock-yes">In stock</span></td>' +
-        '<td><a href="#" onclick="return false;">View retailer</a></td>';
-      retailerRows.appendChild(row);
-    });
+    // Fetch retailer prices and catalog data
+    Promise.all([
+      fetch('/api/catalog'),
+      fetch('/api/products/' + encodeURIComponent(productId) + '/retailer-prices')
+    ]).then(function(responses) {
+      return Promise.all(responses.map(function(r) { return r.ok ? r.json() : null; }));
+    }).then(function([catalogData, retailerData]) {
+      if (!catalogData || !retailerData) return;
+      var catalogProducts = catalogData.products;
+      var catalogProduct = catalogProducts.find(function(item) { return item.id === productId; });
+      if (!catalogProduct) return;
+
+      // Build a map of model_id -> retailer prices from the new API
+      var retailerPrices = retailerData.retailer_prices || [];
+
+      // Build the current prices table
+      var html = '';
+      // Show all retailer prices
+      if (retailerPrices.length > 0) {
+        retailerPrices.forEach(function(rp) {
+          var priceDisplay = rp.price_dollars !== null ? '$' + rp.price_dollars.toFixed(2) : 'No price';
+          var stockDisplay = rp.in_stock ? 'In stock' : 'Out of stock';
+          var retailerLink = rp.product_url ? '<a href="' + rp.product_url + '" target="_blank" class="retailer-link">' + rp.retailer_name + '</a>' : rp.retailer_name;
+          html += '<tr><td>' + retailerLink + '</td><td>' + priceDisplay + '</td><td>' + stockDisplay + '</td><td>Nov 23, 2026</td></tr>';
+        });
+        // Show median price separately at the bottom
+        html += '<tr class="median-row"><td colspan="4"><strong>Median price:</strong> $' + (catalogProduct.price_cents / 100).toFixed(2) + '</td></tr>';
+      } else if (catalogProduct.price_cents !== null) {
+        // Fallback: show just the median price
+        html = '<tr><td colspan="4">No retailer price data available yet.</td></tr>';
+        html += '<tr class="median-row"><td colspan="4"><strong>Median price:</strong> $' + (catalogProduct.price_cents / 100).toFixed(2) + '</td></tr>';
+      } else {
+        html = '<tr><td colspan="4">No clean retailer data yet.</td></tr>';
+      }
+      retailerRows.innerHTML = html;
+    })
+    .catch(function() {});
 
     document.querySelectorAll('.time-toggles .toggle').forEach(function(button) {
       button.addEventListener('click', function() {
