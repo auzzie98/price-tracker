@@ -24,3 +24,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.log
+
+# User receipt photos
+web/uploads/*
+!web/uploads/.gitignore

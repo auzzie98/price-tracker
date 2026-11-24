@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Upload a Price - Price Tracker</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header class="header-bar">
+    <a class="header-logo" href="/">Price Tracker</a>
+    <nav class="header-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/gpus">GPUs</a>
+      <a href="/cpus">CPUs</a>
+      <a href="/ram">RAM</a>
+      <a href="/methodology">Methodology</a>
+      <a class="active" href="/upload-receipt">Upload a Price</a>
+    </nav>
+  </header>
+
+  <main class="submission-page">
+    <section class="submission-heading">
+      <h1>Upload a Price</h1>
+      <p>Retailer sold only. Third party sellers will be rejected.</p>
+    </section>
+
+    <section class="submission-card">
+      <form id="upload-form" enctype="multipart/form-data">
+        <label for="model-id">Model</label>
+        <select id="model-id" name="model_id" required></select>
+
+        <label for="retailer">Retailer</label>
+        <select id="retailer" name="retailer" required></select>
+
+        <label for="photo">Receipt or price tag photo</label>
+        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/bmp,image/tiff,image/webp" required>
+
+        <button class="primary-button" type="submit">Upload and run OCR</button>
+      </form>
+      <div id="result" class="submission-result" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    async function loadOptions() {
+      const options = await fetch("/api/receipt-options").then(r => r.ok ? r.json() : {models: [], retailers: []});
+      document.querySelector("#model-id").innerHTML = options.models.map(p =>
+        `<option value="${p.id}">${p.category}: ${p.model}</option>`
+      ).join("");
+      document.querySelector("#retailer").innerHTML = options.retailers.map(r =>
+        `<option value="${r.id}">${r.name}</option>`
+      ).join("");
+    }
+
+    document.querySelector("#upload-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      const result = document.querySelector("#result");
+      result.textContent = "Running OCR...";
+      const response = await fetch("/upload-receipt", {
+        method: "POST",
+        body: new FormData(event.target)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        result.textContent = data.detail || "Upload failed";
+        return;
+      }
+      const price = data.suggested_price_dollars === null
+        ? "Not found"
+        : "$" + data.suggested_price_dollars.toFixed(2);
+      result.innerHTML =
+        `<p><strong>Status:</strong> pending</p>` +
+        `<p><strong>Suggested price:</strong> ${price}</p>` +
+        `<p>It will be reviewed before it goes live.</p>`;
+    });
+
+    loadOptions();
+  </script>
+</body>
+</html>

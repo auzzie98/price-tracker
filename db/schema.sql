@@ -66,6 +66,18 @@ CREATE TABLE IF NOT EXISTS page_views (
   FOREIGN KEY (sku_id) REFERENCES skus(id)
 );
 
+CREATE TABLE IF NOT EXISTS receipt_submissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  model_id TEXT NOT NULL,
+  retailer TEXT NOT NULL,
+  photo_path TEXT NOT NULL,
+  ocr_text TEXT NOT NULL,
+  suggested_price_cents INTEGER,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (model_id) REFERENCES skus(id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_observations_sku_time
   ON observations(sku_id, observed_at);
 CREATE INDEX IF NOT EXISTS idx_sku_prices_sku_period

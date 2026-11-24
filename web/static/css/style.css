@@ -374,6 +374,212 @@ h1 {
 .ctx-stroke-down { stroke: #FF5000; }
 .gradient-fill { fill: rgba(0, 200, 5, 0.1); }
 
+/* Receipt submission and admin review */
+.submission-page,
+.review-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 2rem;
+}
+.submission-heading,
+.review-heading {
+  margin-bottom: 1rem;
+}
+.submission-heading p,
+.review-heading p {
+  color: #9CA3AF;
+}
+.submission-card,
+.review-card,
+.review-filters {
+  background: #1E1E1E;
+  border: 1px solid #2D2D2D;
+  border-radius: 4px;
+}
+.submission-card {
+  max-width: 760px;
+  padding: 1.25rem;
+}
+.submission-card form {
+  display: grid;
+  gap: 0.65rem;
+}
+.submission-card label,
+.review-filters label {
+  color: #FFFFFF;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.submission-card select,
+.submission-card input,
+.review-filters select,
+.review-filters input {
+  width: 100%;
+  background: #121212;
+  color: #FFFFFF;
+  border: 1px solid #2D2D2D;
+  border-radius: 3px;
+  padding: 0.65rem;
+  font: inherit;
+}
+.primary-button,
+.approve-button,
+.reject-button {
+  border: 1px solid #2D2D2D;
+  border-radius: 3px;
+  padding: 0.65rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: fit-content;
+}
+.primary-button,
+.approve-button {
+  background: #00C805;
+  color: #000000;
+}
+.reject-button {
+  background: #121212;
+  color: #FF5000;
+  border-color: #FF5000;
+}
+.reset-button {
+  background: #121212;
+  color: #FFFFFF;
+  border: 1px solid #9CA3AF;
+  border-radius: 3px;
+  padding: 0.65rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: fit-content;
+}
+.submission-result {
+  margin-top: 1rem;
+  color: #FFFFFF;
+}
+.submission-result p {
+  margin: 0.35rem 0;
+}
+.review-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  color: #9CA3AF;
+}
+.review-counts span {
+  background: #1E1E1E;
+  border: 1px solid #2D2D2D;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+}
+.review-counts .count-button {
+  background: #1E1E1E;
+  color: #FFFFFF;
+  border: 1px solid #2D2D2D;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font: inherit;
+}
+.review-counts .count-button:hover {
+  border-color: #9CA3AF;
+}
+.photo-missing {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #121212;
+  border: 1px solid #2D2D2D;
+  border-radius: 4px;
+  color: #9CA3AF;
+}
+.review-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+.review-filters label {
+  display: grid;
+  gap: 0.35rem;
+}
+.review-list {
+  display: grid;
+  gap: 1rem;
+}
+.review-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) 1fr;
+  gap: 1rem;
+  padding: 1rem;
+}
+.review-card img {
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  background: #121212;
+  border: 1px solid #2D2D2D;
+  border-radius: 4px;
+}
+.review-details p {
+  margin: 0.35rem 0;
+  color: #FFFFFF;
+}
+.review-details pre {
+  max-height: 220px;
+  overflow: auto;
+  background: #121212;
+  border: 1px solid #2D2D2D;
+  border-radius: 3px;
+  padding: 0.75rem;
+  color: #9CA3AF;
+  white-space: pre-wrap;
+}
+.review-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+.admin-label {
+  color: #9CA3AF;
+  font-size: 0.85rem;
+}
+.empty-review {
+  color: #9CA3AF;
+  padding: 1rem;
+  background: #1E1E1E;
+  border: 1px solid #2D2D2D;
+  border-radius: 4px;
+}
+
+@media (max-width: 900px) {
+  .review-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .review-card {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .header-bar {
+    height: auto;
+    min-height: 56px;
+    padding: 0.5rem 1rem;
+  }
+  .header-nav {
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+  .header-nav a {
+    font-size: 0.75rem;
+  }
+  .review-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Print stylesheet - forces dark theme when printing */
 @media print {
   body {

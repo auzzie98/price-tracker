@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Receipt Review - Price Tracker</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header class="header-bar">
+    <a class="header-logo" href="/">Price Tracker</a>
+    <nav class="header-nav" aria-label="Admin navigation">
+      <a href="/">Back to main site</a>
+      <a href="/upload-receipt">Upload a Price</a>
+      <span class="admin-label">Receipt Review</span>
+    </nav>
+  </header>
+
+  <main class="review-page">
+    <section class="review-heading">
+      <h1>Receipt Review</h1>
+      <div class="review-counts" id="review-counts"></div>
+    </section>
+
+    <section class="review-filters">
+      <label>Status
+        <select id="status-filter">
+          <option value="all">All</option>
+          <option value="pending" selected>Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </label>
+      <label>Retailer
+        <select id="retailer-filter"><option value="all">All retailers</option></select>
+      </label>
+      <label>Model
+        <select id="model-filter"><option value="all">All models</option></select>
+      </label>
+      <label>Search model
+        <input id="model-search" type="search" placeholder="Search model name">
+      </label>
+    </section>
+
+    <section id="submissions" class="review-list" aria-live="polite"></section>
+  </main>
+
+  <script>
+    let allSubmissions = [];
+
+    function escapeText(value) {
+      const element = document.createElement("span");
+      element.textContent = value == null ? "" : String(value);
+      return element.innerHTML;
+    }
+
+    function render() {
+      const status = document.querySelector("#status-filter").value;
+      const retailer = document.querySelector("#retailer-filter").value;
+      const model = document.querySelector("#model-filter").value;
+      const search = document.querySelector("#model-search").value.trim().toLowerCase();
+      const filtered = allSubmissions.filter(s =>
+        (status === "all" || s.status === status) &&
+        (retailer === "all" || s.retailer === retailer) &&
+        (model === "all" || s.model_id === model) &&
+        (!search || s.model_name.toLowerCase().includes(search))
+      );
+
+      const container = document.querySelector("#submissions");
+      if (!filtered.length) {
+        container.innerHTML = '<p class="empty-review">No submissions match these filters.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(s => `
+        <article class="review-card" data-id="${s.id}">
+          ${s.photo_exists
+            ? `<img src="${escapeText(s.photo_url)}" alt="Receipt photo">`
+            : `<div class="photo-missing">Photo missing</div>`}
+          <div class="review-details">
+            <p><strong>Model:</strong> ${escapeText(s.model_name)} (${escapeText(s.model_id)})</p>
+            <p><strong>Retailer:</strong> ${escapeText(s.retailer)}</p>
+            <p><strong>Suggested price:</strong> ${s.suggested_price_cents === null ? "Not found" : "$" + (s.suggested_price_cents / 100).toFixed(2)}</p>
+            <p><strong>Date submitted:</strong> ${escapeText(s.created_at)}</p>
+            <p><strong>Status:</strong> ${escapeText(s.status)}</p>
+            <p><strong>OCR text:</strong></p>
+            <pre>${escapeText(s.ocr_text)}</pre>
+            ${s.status === "pending" ? `
+              <div class="review-actions">
+                <button class="approve-button" type="button" data-action="approve">Approve</button>
+                <button class="reject-button" type="button" data-action="reject">Reject</button>
+              </div>` : ""}
+            ${s.status === "approved" ? `
+              <div class="review-actions">
+                <button class="reject-button" type="button" data-action="revert">Revert to Rejected</button>
+                <button class="reset-button" type="button" data-action="reset">Reset to Pending</button>
+              </div>` : ""}
+            ${s.status === "rejected" ? `
+              <div class="review-actions">
+                <button class="reset-button" type="button" data-action="reset">Reset to Pending</button>
+              </div>` : ""}
+          </div>
+        </article>
+      `).join("");
+    }
+
+    async function loadSubmissions() {
+      const response = await fetch("/api/receipt-submissions");
+      const data = await response.json();
+      allSubmissions = data.submissions;
+      document.querySelector("#review-counts").innerHTML =
+        `<button type="button" data-status="pending" class="count-button">Pending: ${data.counts.pending}</button>` +
+        `<button type="button" data-status="approved" class="count-button">Approved: ${data.counts.approved}</button>` +
+        `<button type="button" data-status="rejected" class="count-button">Rejected: ${data.counts.rejected}</button>`;
+
+      const retailers = [...new Set(allSubmissions.map(s => s.retailer))].sort();
+      document.querySelector("#retailer-filter").innerHTML =
+        '<option value="all">All retailers</option>' +
+        retailers.map(r => `<option value="${escapeText(r)}">${escapeText(r)}</option>`).join("");
+
+      const models = [...new Map(allSubmissions.map(s => [s.model_id, s.model_name])).entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]));
+      document.querySelector("#model-filter").innerHTML =
+        '<option value="all">All models</option>' +
+        models.map(([id, name]) => `<option value="${escapeText(id)}">${escapeText(name)}</option>`).join("");
+      render();
+    }
+
+    document.querySelector(".review-filters").addEventListener("change", render);
+    document.querySelector("#model-search").addEventListener("input", render);
+    document.querySelector("#review-counts").addEventListener("click", event => {
+      const button = event.target.closest("button[data-status]");
+      if (!button) return;
+      document.querySelector("#status-filter").value = button.dataset.status;
+      render();
+    });
+    document.querySelector("#submissions").addEventListener("click", async event => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const article = button.closest(".review-card");
+      const action = button.dataset.action;
+      if (action === "revert" && !window.confirm("Revert this approval to rejected and delete its observation?")) {
+        return;
+      }
+      if (action === "reset" && !window.confirm("Reset this submission to pending for re-review?")) {
+        return;
+      }
+      const response = await fetch(`/api/receipt-submissions/${article.dataset.id}/${action}`, {method: "POST"});
+      if (response.ok) {
+        await loadSubmissions();
+      } else {
+        const data = await response.json();
+        alert(data.detail || "Action failed");
+      }
+    });
+
+    loadSubmissions();
+  </script>
+</body>
+</html>
