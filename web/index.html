@@ -46,7 +46,16 @@
   <section class="trend-section">
     <h2 class="trend-title">Trend</h2>
     <p class="trend-subtitle">Price change vs the start of the selected period.</p>
-    <div class="trend-price" id="trend-price">$349.99</div>
+    <div class="trend-legend">
+      <div>
+        <div class="trend-model-name" id="trend-model-name">RTX 2060</div>
+        <div class="trend-price-row">
+          <span class="trend-price" id="trend-price">$349.99</span>
+          <span class="trend-change change-negative" id="trend-change">-1.2%</span>
+        </div>
+      </div>
+      <div class="trend-hover-date" id="trend-hover-date"></div>
+    </div>
     <canvas id="main-chart" width="1000" height="300"></canvas>
   </section>
 
@@ -227,7 +236,7 @@
           } else if (startToStarting < 0) {
             ctx.strokeStyle = '#00C805';
           } else {
-            ctx.strokeStyle = '#9CA3AF';
+            ctx.strokeStyle = endToStarting >= 0 ? '#FF5000' : '#00C805';
           }
 
           ctx.beginPath();
@@ -296,7 +305,8 @@
             mainChartCanvas,
             mainChartValues,
             selectedRange,
-            document.getElementById('trend-price')
+            document.getElementById('trend-price'),
+            document.getElementById('trend-hover-date')
           );
         }
       }
@@ -377,7 +387,7 @@
               } else if (startCents < startingCents) {
                 ctx.strokeStyle = '#00C805';
               } else {
-                ctx.strokeStyle = '#9CA3AF';
+                ctx.strokeStyle = endCents >= startingCents ? '#FF5000' : '#00C805';
               }
               ctx.stroke();
             }
@@ -399,6 +409,20 @@
           var model = this.dataset.model;
           if (modelHistories[model]) {
             mainChartValues = modelHistories[model];
+          }
+          var modelMeta = {
+            rtx2060: ['RTX 2060', '-1.2%', 'change-negative'],
+            rtx3080: ['RTX 3080', '+0.5%', 'change-positive'],
+            rtx5070: ['ASUS Dual RTX 5070', '-0.3%', 'change-negative'],
+            ryzen9800x3d: ['AMD Ryzen 7 9800X3D', '+0.8%', 'change-positive'],
+            corsair32gb: ['Corsair Vengeance 32GB DDR5-6000 CL30', '-2.1%', 'change-negative']
+          };
+          var meta = modelMeta[model];
+          if (meta) {
+            document.getElementById('trend-model-name').textContent = meta[0];
+            var trendChange = document.getElementById('trend-change');
+            trendChange.textContent = meta[1];
+            trendChange.className = 'trend-change ' + meta[2];
           }
           drawMainChartUI();
         });

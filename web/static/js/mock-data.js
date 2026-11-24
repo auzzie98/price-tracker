@@ -30,7 +30,7 @@ window.mockCatalog = (function() {
       } else if (range === '1w') {
         date.setDate(end.getDate() - (count - 1 - i));
       } else if (range === '1m') {
-        date.setDate(end.getDate() - (count - 1 - i));
+        date.setDate(1 + Math.round(i * 22 / (count - 1)));
       } else if (range === '1y') {
         date.setDate(end.getDate() - Math.round((count - 1 - i) * 365 / (count - 1)));
       } else {

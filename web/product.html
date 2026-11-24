@@ -28,7 +28,13 @@
     <section class="trend-section product-trend">
       <h2 class="trend-title">Trend</h2>
       <p class="trend-subtitle">Price change vs the start of the selected period.</p>
-      <div class="trend-price" id="trend-price">$579.99</div>
+      <div class="trend-legend">
+        <div class="trend-model-name" id="trend-model-name">Product</div>
+        <div class="trend-price-row">
+          <span class="trend-price" id="trend-price">$579.99</span>
+        </div>
+      </div>
+      <div class="trend-hover-date" id="trend-hover-date"></div>
       <canvas id="product-chart" width="1000" height="300"></canvas>
     </section>
     <div class="time-toggles">
@@ -97,7 +103,7 @@
         ctx.beginPath();
         ctx.moveTo(x(i), y(values[i]));
         ctx.lineTo(x(i + 1), y(values[i + 1]));
-        ctx.strokeStyle = endCents > startCents ? '#FF5000' : endCents < startCents ? '#00C805' : '#9CA3AF';
+        ctx.strokeStyle = endCents > startCents ? '#FF5000' : '#00C805';
         ctx.stroke();
       }
 
@@ -128,7 +134,8 @@
           canvas,
           values,
           selectedRange,
-          document.getElementById('trend-price')
+          document.getElementById('trend-price'),
+          document.getElementById('trend-hover-date')
         );
       }
     }

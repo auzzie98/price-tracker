@@ -6,26 +6,21 @@
 
   function getDates(count, range) {
     var dates = [];
-    var end = new Date(END_DATE);
-
     for (var i = 0; i < count; i++) {
-      var date = new Date(end);
+      var date = new Date(END_DATE);
       if (range === "1d") {
-        date.setMinutes(0, 0, 0);
-        date.setHours(24 * i / count);
+        date.setHours(9);
+        date.setMinutes(Math.round(i * 900 / (count - 1)));
       } else if (range === "1w") {
-        date = new Date(end);
-        date.setDate(end.getDate() - (count - 1 - i));
-        date.setHours(9 + Math.round((i % 9) * 0.25));
+        date.setDate(END_DATE.getDate() - 6 + i);
+        date.setHours(9 + (i % 9));
       } else if (range === "1m") {
-        date = new Date(end);
-        date.setDate(end.getDate() - (count - 1 - i));
+        date.setDate(END_DATE.getDate() - 22 + i);
       } else if (range === "1y") {
-        date = new Date(end);
-        date.setDate(end.getDate() - Math.round((count - 1 - i) * 365 / (count - 1)));
+        date.setDate(END_DATE.getDate());
+        date.setMonth(END_DATE.getMonth() - 11 + Math.floor(i * 11 / (count - 1)));
       } else {
-        date = new Date(end);
-        date.setMonth(end.getMonth() - Math.round((count - 1 - i) * 36 / (count - 1)));
+        date.setMonth(END_DATE.getMonth() - 35 + Math.floor(i * 35 / (count - 1)));
       }
       dates.push(date);
     }
@@ -59,6 +54,13 @@
     return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
   }
 
+  function segmentColor(value, startValue) {
+    var valueCents = Math.round(value * 100);
+    var startCents = Math.round(startValue * 100);
+    if (valueCents < startCents) return "#00C805";
+    return "#FF5000";
+  }
+
   function createTooltip(canvas) {
     var tooltip = document.createElement("div");
     tooltip.className = "chart-tooltip";
@@ -67,133 +69,25 @@
     return tooltip;
   }
 
-  function drawSmoothLine(ctx, points) {
-    if (!points.length) return;
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    for (var i = 1; i < points.length - 1; i++) {
-      var midpointX = (points[i].x + points[i + 1].x) / 2;
-      var midpointY = (points[i].y + points[i + 1].y) / 2;
-      ctx.quadraticCurveTo(points[i].x, points[i].y, midpointX, midpointY);
-    }
-    var last = points[points.length - 1];
-    ctx.quadraticCurveTo(points[points.length - 2].x, points[points.length - 2].y, last.x, last.y);
-  }
-
-  function attach(options) {
-    var canvas = options.canvas;
-    var state = states.get(canvas) || {};
-    state.canvas = canvas;
-    state.values = options.values || [];
-    state.range = options.range || "1m";
-    state.priceElement = options.priceElement || null;
-    state.tooltip = state.tooltip || createTooltip(canvas);
-    state.hoverIndex = null;
-    state.hovered = false;
-    states.set(canvas, state);
-    if (state.priceElement && state.values.length) {
-      state.priceElement.textContent = "$" + state.values[state.values.length - 1].toFixed(2);
-    }
-
-    if (!state.listenersAttached) {
-      canvas.addEventListener("pointermove", function (event) {
-        handlePointer(event, state);
-      });
-      canvas.addEventListener("pointerdown", function (event) {
-        if (event.pointerType === "touch") {
-          event.preventDefault();
-          handlePointer(event, state);
-        }
-      });
-      canvas.addEventListener("pointerleave", function () {
-        clearHover(state);
-      });
-      canvas.addEventListener("pointerup", function (event) {
-        if (event.pointerType === "touch") {
-          handlePointer(event, state);
-        }
-      });
-      canvas.addEventListener("pointercancel", function () {
-        clearHover(state);
-      });
-      state.listenersAttached = true;
-    }
-
-    draw(state);
-  }
-
-  function clearHover(state) {
-    state.hovered = false;
-    state.hoverIndex = null;
-    state.tooltip.classList.remove("visible");
-    if (state.priceElement && state.values.length) {
-      state.priceElement.textContent = "$" + state.values[state.values.length - 1].toFixed(2);
-    }
-    draw(state);
-  }
-
-  function handlePointer(event, state) {
-    if (!state.values.length) return;
-    var rect = state.canvas.getBoundingClientRect();
-    var cssX = event.clientX - rect.left;
-    var cssWidth = rect.width;
-    var plotWidth = Math.max(1, cssWidth - 72);
-    var clampedX = Math.max(0, Math.min(plotWidth, cssX));
-    var index = Math.round(clampedX / plotWidth * (state.values.length - 1));
-    index = Math.max(0, Math.min(state.values.length - 1, index));
-    state.hoverIndex = index;
-    state.hovered = true;
-
-    if (state.priceElement) {
-      state.priceElement.textContent = "$" + state.values[index].toFixed(2);
-    }
-
-    var dates = getDates(state.values.length, state.range);
-    var point = layout(state)[index];
-    state.tooltip.innerHTML =
-      "<strong>$" + state.values[index].toFixed(2) + "</strong>" +
-      "<span>" + formatDate(dates[index], state.range) + "</span>";
-
-    var tooltipWidth = 170;
-    var tooltipLeft = point.x + 12 + (state.canvas.offsetLeft || 0);
-    if (tooltipLeft + tooltipWidth > cssWidth - 4) {
-      tooltipLeft = point.x - tooltipWidth - 12;
-    }
-    tooltipLeft = Math.max(4, tooltipLeft);
-    var tooltipTop = Math.max(8, point.y - 74 + (state.canvas.offsetTop || 0));
-    state.tooltip.style.left = tooltipLeft + "px";
-    state.tooltip.style.top = tooltipTop + "px";
-    state.tooltip.classList.add("visible");
-    draw(state);
-  }
-
   function layout(state) {
     var canvas = state.canvas;
-    var cssWidth = Math.max(1, canvas.clientWidth || canvas.offsetWidth);
-    var cssHeight = 300;
+    var width = Math.max(1, canvas.clientWidth || canvas.offsetWidth);
+    var height = 300;
     var values = state.values;
     var dataMin = Math.min.apply(null, values);
     var dataMax = Math.max.apply(null, values);
-    var range = dataMax - dataMin;
-    if (range === 0) range = Math.abs(dataMax) * 0.1 || 1;
-    var chartMin = dataMin - range * 0.08;
-    var chartMax = dataMax + range * 0.08;
-    var chartRange = chartMax - chartMin;
-    var plotWidth = Math.max(1, cssWidth - 72);
-    var plotHeight = cssHeight - 44;
+    var spread = dataMax - dataMin;
+    if (spread === 0) spread = Math.abs(dataMax) * 0.1 || 1;
+    var chartMin = dataMin - spread * 0.08;
+    var chartMax = dataMax + spread * 0.08;
+    var plotWidth = Math.max(1, width - 72);
+    var plotHeight = height - 44;
 
-    function x(index) {
-      if (values.length === 1) return plotWidth / 2;
-      return index / (values.length - 1) * plotWidth;
-    }
-    function y(value) {
-      return 12 + (chartMax - value) / chartRange * plotHeight;
-    }
-
-    var points = values.map(function (value, index) {
-      return { x: x(index), y: y(value), value: value };
+    return values.map(function (value, index) {
+      var x = values.length === 1 ? plotWidth / 2 : index / (values.length - 1) * plotWidth;
+      var y = 12 + (chartMax - value) / (chartMax - chartMin) * plotHeight;
+      return { x: x, y: y, value: value };
     });
-    return points;
   }
 
   function draw(state) {
@@ -214,74 +108,62 @@
     ctx.fillRect(0, 0, width, height);
 
     var points = layout(state);
-    var startingValue = values[0];
+    var startValue = values[0];
     var endValue = values[values.length - 1];
-    var lineColor = Math.round(endValue * 100) < Math.round(startingValue * 100)
-      ? "#00C805"
-      : Math.round(endValue * 100) > Math.round(startingValue * 100)
-        ? "#FF5000"
-        : "#9CA3AF";
+    var lineColor = endValue < startValue ? "#00C805" : "#FF5000";
 
-    ctx.save();
     ctx.beginPath();
-    points.forEach(function (point, index) {
-      if (index === 0) ctx.moveTo(point.x, point.y);
-      else ctx.lineTo(point.x, point.y);
-    });
+    ctx.moveTo(points[0].x, points[0].y);
+    for (var i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
     ctx.lineTo(points[points.length - 1].x, height - 32);
     ctx.lineTo(points[0].x, height - 32);
     ctx.closePath();
     var gradient = ctx.createLinearGradient(0, 12, 0, height - 32);
-    gradient.addColorStop(0, lineColor === "#00C805" ? "rgba(0,200,5,0.22)" : lineColor === "#FF5000" ? "rgba(255,80,0,0.22)" : "rgba(156,163,175,0.12)");
+    gradient.addColorStop(0, lineColor === "#00C805" ? "rgba(0,200,5,0.28)" : lineColor === "#FF5000" ? "rgba(255,80,0,0.28)" : "rgba(156,163,175,0.14)");
     gradient.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = gradient;
     ctx.fill();
-    ctx.restore();
 
     ctx.lineWidth = state.hovered ? 3 : 2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    for (var i = 0; i < points.length - 1; i++) {
-      var segment = [points[i], points[i + 1]];
-      var endCents = Math.round(values[i + 1] * 100);
-      var startCents = Math.round(startingValue * 100);
+    ctx.lineCap = "butt";
+    ctx.lineJoin = "miter";
+    for (var segmentIndex = 0; segmentIndex < points.length - 1; segmentIndex++) {
+      var first = points[segmentIndex];
+      var second = points[segmentIndex + 1];
+      var firstCents = Math.round(first.value * 100);
+      var secondCents = Math.round(second.value * 100);
+      var startCents = Math.round(startValue * 100);
       ctx.beginPath();
-      ctx.moveTo(segment[0].x, segment[0].y);
-      var controlX = (segment[0].x + segment[1].x) / 2;
-      var controlY = (segment[0].y + segment[1].y) / 2;
-      ctx.quadraticCurveTo(controlX, segment[0].y, controlX, controlY);
-      ctx.quadraticCurveTo(controlX, segment[1].y, segment[1].x, segment[1].y);
-      ctx.strokeStyle = endCents < startCents ? "#00C805" : endCents > startCents ? "#FF5000" : "#9CA3AF";
-      ctx.stroke();
-    }
+      ctx.moveTo(first.x, first.y);
 
-    if (state.hovered && state.hoverIndex !== null) {
-      var point = points[state.hoverIndex];
-      ctx.save();
-      ctx.strokeStyle = "#9CA3AF";
-      ctx.setLineDash([4, 4]);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(point.x, 12);
-      ctx.lineTo(point.x, height - 32);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
-      ctx.fillStyle = lineColor;
-      ctx.fill();
-      ctx.strokeStyle = "#FFFFFF";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.restore();
+      if ((firstCents < startCents && secondCents > startCents) ||
+          (firstCents > startCents && secondCents < startCents)) {
+        var fraction = (startCents - firstCents) / (secondCents - firstCents);
+        var crossingX = first.x + (second.x - first.x) * fraction;
+        var crossingY = first.y + (second.y - first.y) * fraction;
+        ctx.lineTo(crossingX, crossingY);
+        ctx.strokeStyle = firstCents < startCents ? "#00C805" : "#FF5000";
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(crossingX, crossingY);
+        ctx.lineTo(second.x, second.y);
+        ctx.strokeStyle = secondCents < startCents ? "#00C805" : "#FF5000";
+        ctx.stroke();
+      } else {
+        ctx.lineTo(second.x, second.y);
+        ctx.strokeStyle = segmentColor(second.value, startValue);
+        ctx.stroke();
+      }
     }
 
     var dataMin = Math.min.apply(null, values);
     var dataMax = Math.max.apply(null, values);
-    var range = dataMax - dataMin;
-    if (range === 0) range = Math.abs(dataMax) * 0.1 || 1;
-    var chartMin = dataMin - range * 0.08;
-    var chartMax = dataMax + range * 0.08;
+    var spread = dataMax - dataMin;
+    if (spread === 0) spread = Math.abs(dataMax) * 0.1 || 1;
+    var chartMin = dataMin - spread * 0.08;
+    var chartMax = dataMax + spread * 0.08;
     ctx.fillStyle = "#9CA3AF";
     ctx.font = "12px Arial";
     ctx.textAlign = "left";
@@ -290,21 +172,139 @@
     ctx.fillText("$" + ((chartMin + chartMax) / 2).toFixed(2), width - 62, height / 2);
     ctx.fillText("$" + chartMin.toFixed(2), width - 62, height - 44);
 
+    var currentY = points[points.length - 1].y;
+    ctx.fillStyle = lineColor;
+    ctx.fillRect(width - 68, currentY - 10, 68, 20);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("$" + endValue.toFixed(2), width - 34, currentY + 4);
+
     var dates = getDates(values.length, state.range);
-    var labelIndexes = [0, Math.round((values.length - 1) * 0.25), Math.round((values.length - 1) * 0.5), Math.round((values.length - 1) * 0.75), values.length - 1];
+    var labelIndexes = state.range === "1m"
+      ? [0, Math.round((values.length - 1) * 7 / 22), Math.round((values.length - 1) * 14 / 22), values.length - 1]
+      : [0, Math.round((values.length - 1) * 0.25), Math.round((values.length - 1) * 0.5), Math.round((values.length - 1) * 0.75), values.length - 1];
+    ctx.fillStyle = "#9CA3AF";
     ctx.font = "11px Arial";
     ctx.textBaseline = "middle";
     labelIndexes.forEach(function (index, position) {
       var point = points[index];
       ctx.textAlign = position === 0 ? "left" : position === labelIndexes.length - 1 ? "right" : "center";
-      ctx.fillText(formatAxisDate(dates[index], state.range), point.x, height - 12);
+      var text = state.range === "1m"
+        ? ["Nov 1", "Nov 8", "Nov 15", "Nov 22"][position]
+        : formatAxisDate(dates[index], state.range);
+      ctx.fillText(text, point.x, height - 12);
     });
+
+    if (state.hovered && state.hoverIndex !== null) {
+      var hoverPoint = points[state.hoverIndex];
+      ctx.save();
+      ctx.strokeStyle = "#9CA3AF";
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(hoverPoint.x, 12);
+      ctx.lineTo(hoverPoint.x, height - 32);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(hoverPoint.x, hoverPoint.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = segmentColor(hoverPoint.value, startValue);
+      ctx.fill();
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function clearHover(state) {
+    state.hovered = false;
+    state.hoverIndex = null;
+    state.tooltip.classList.remove("visible");
+    if (state.priceElement && state.values.length) {
+      state.priceElement.textContent = "$" + state.values[state.values.length - 1].toFixed(2);
+    }
+    if (state.hoverDateElement) state.hoverDateElement.textContent = "";
+    draw(state);
+  }
+
+  function handlePointer(event, state) {
+    if (!state.values.length) return;
+    var rect = state.canvas.getBoundingClientRect();
+    var cssX = event.clientX - rect.left;
+    var plotWidth = Math.max(1, rect.width - 72);
+    var clampedX = Math.max(0, Math.min(plotWidth, cssX));
+    var index = Math.round(clampedX / plotWidth * (state.values.length - 1));
+    index = Math.max(0, Math.min(state.values.length - 1, index));
+    state.hoverIndex = index;
+    state.hovered = true;
+
+    if (state.priceElement) state.priceElement.textContent = "$" + state.values[index].toFixed(2);
+    var dates = getDates(state.values.length, state.range);
+    var dateText = formatDate(dates[index], state.range);
+    if (state.hoverDateElement) state.hoverDateElement.textContent = dateText;
+
+    var point = layout(state)[index];
+    state.tooltip.innerHTML =
+      "<strong>$" + state.values[index].toFixed(2) + "</strong>" +
+      "<span>" + dateText + "</span>";
+    var tooltipWidth = 170;
+    var left = point.x + 12 + (state.canvas.offsetLeft || 0);
+    if (left + tooltipWidth > rect.width - 4) left = point.x - tooltipWidth - 12;
+    left = Math.max(4, left);
+    var top = Math.max(8, point.y - 74 + (state.canvas.offsetTop || 0));
+    state.tooltip.style.left = left + "px";
+    state.tooltip.style.top = top + "px";
+    state.tooltip.classList.add("visible");
+    draw(state);
+  }
+
+  function attach(options) {
+    var canvas = options.canvas;
+    var state = states.get(canvas) || {};
+    state.canvas = canvas;
+    state.values = options.values || [];
+    state.range = options.range || "1m";
+    state.priceElement = options.priceElement || null;
+    state.hoverDateElement = options.hoverDateElement || null;
+    state.tooltip = state.tooltip || createTooltip(canvas);
+    state.hoverIndex = null;
+    state.hovered = false;
+    states.set(canvas, state);
+
+    if (!state.listenersAttached) {
+      canvas.addEventListener("pointermove", function (event) { handlePointer(event, state); });
+      canvas.addEventListener("pointerdown", function (event) {
+        if (event.pointerType === "touch") {
+          event.preventDefault();
+          handlePointer(event, state);
+        }
+      });
+      canvas.addEventListener("pointerleave", function () { clearHover(state); });
+      canvas.addEventListener("pointerup", function (event) {
+        if (event.pointerType === "touch") handlePointer(event, state);
+      });
+      canvas.addEventListener("pointercancel", function () { clearHover(state); });
+      state.listenersAttached = true;
+    }
+
+    if (state.priceElement && state.values.length) {
+      state.priceElement.textContent = "$" + state.values[state.values.length - 1].toFixed(2);
+    }
+    draw(state);
   }
 
   window.PriceTrackerChart = {
     attach: attach,
-    draw: function (canvas, values, range, priceElement) {
-      attach({ canvas: canvas, values: values, range: range, priceElement: priceElement });
+    draw: function (canvas, values, range, priceElement, hoverDateElement) {
+      attach({
+        canvas: canvas,
+        values: values,
+        range: range,
+        priceElement: priceElement,
+        hoverDateElement: hoverDateElement
+      });
     }
   };
 })();
