@@ -27,7 +27,14 @@
     return dates;
   }
 
-  function formatDate(date, range) {
+  function formatDate(date, range, useActualDates) {
+    if (useActualDates) {
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
     if (range === "1d") {
       return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
     }
@@ -54,11 +61,16 @@
     return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
   }
 
-  function segmentColor(value, startValue) {
+  function formatObservedDate(date) {
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  function segmentColor(value, startValue, neutralColor) {
     var valueCents = Math.round(value * 100);
     var startCents = Math.round(startValue * 100);
     if (valueCents < startCents) return "#00C805";
-    return "#FF5000";
+    if (valueCents > startCents) return "#FF5000";
+    return neutralColor || "#9CA3AF";
   }
 
   function createTooltip(canvas) {
@@ -117,7 +129,17 @@
     var points = layout(state);
     var startValue = values[0];
     var endValue = values[values.length - 1];
-    var lineColor = endValue < startValue ? "#00C805" : "#FF5000";
+    var lineColor = segmentColor(endValue, startValue, state.neutralColor);
+    var fillColor = lineColor === "#00C805"
+      ? "rgba(0,200,5,0.28)"
+      : lineColor === "#FF5000"
+        ? "rgba(255,80,0,0.28)"
+        : "rgba(156,163,175,0.2)";
+    var singlePointFillColor = lineColor === "#00C805"
+      ? "rgba(0,200,5,0.18)"
+      : lineColor === "#FF5000"
+        ? "rgba(255,80,0,0.18)"
+        : "rgba(156,163,175,0.18)";
 
     if (values.length === 1) {
       var flatY = points[0].y;
@@ -149,7 +171,7 @@
       ctx.lineTo(points[0].x, height - 32);
       ctx.closePath();
       var gradient = ctx.createLinearGradient(0, 12, 0, height - 32);
-      gradient.addColorStop(0, lineColor === "#00C805" ? "rgba(0,200,5,0.28)" : "rgba(255,80,0,0.28)");
+      gradient.addColorStop(0, fillColor);
       gradient.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = gradient;
       ctx.fill();
@@ -160,7 +182,7 @@
       ctx.lineTo(points[0].x, height - 32);
       ctx.lineTo(0, height - 32);
       ctx.closePath();
-      ctx.fillStyle = lineColor === "#00C805" ? "rgba(0,200,5,0.18)" : "rgba(255,80,0,0.18)";
+      ctx.fillStyle = singlePointFillColor;
       ctx.fill();
     }
 
@@ -187,7 +209,8 @@
       var second = points[segmentIndex + 1];
       var firstCents = Math.round(first.value * 100);
       var secondCents = Math.round(second.value * 100);
-      var startCents = Math.round(startValue * 100);
+      var segmentStartValue = state.segmentColorByPrevious ? first.value : startValue;
+      var startCents = Math.round(segmentStartValue * 100);
       ctx.beginPath();
       ctx.moveTo(first.x, first.y);
 
@@ -206,7 +229,7 @@
         ctx.stroke();
       } else {
         ctx.lineTo(second.x, second.y);
-        ctx.strokeStyle = segmentColor(second.value, startValue);
+        ctx.strokeStyle = segmentColor(second.value, segmentStartValue, state.neutralColor);
         ctx.stroke();
       }
     }
@@ -221,9 +244,17 @@
     ctx.font = "12px Arial";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText("$" + chartMax.toFixed(2), width - 88, 12);
-    ctx.fillText("$" + ((chartMin + chartMax) / 2).toFixed(2), width - 88, height / 2);
-    ctx.fillText("$" + chartMin.toFixed(2), width - 88, height - 44);
+    [
+      { value: chartMax, y: 12 },
+      { value: (chartMin + chartMax) / 2, y: height / 2 },
+      { value: chartMin, y: height - 44 }
+    ].forEach(function (tick) {
+      if (state.suppressCurrentValueTick &&
+          Math.abs(tick.value - endValue) < 0.000001) {
+        return;
+      }
+      ctx.fillText(state.valueFormatter(tick.value), width - 88, tick.y);
+    });
 
     var currentY = points[points.length - 1].y;
     ctx.fillStyle = lineColor;
@@ -233,11 +264,11 @@
     ctx.textAlign = "center";
     // Offset further left so price tag doesn't overlap y-axis label or the rightmost dot
     var priceX = width - 72;
-    ctx.fillText("$" + endValue.toFixed(2), priceX, currentY + 4);
+    ctx.fillText(state.valueFormatter(endValue), priceX, currentY + 4);
 
     var dates = state.dates && state.dates.length === values.length
       ? state.dates.map(function (date) { return new Date(date + "T12:00:00"); })
-      : getDates(values.length, state.range);
+      : state.useActualDates ? [] : getDates(values.length, state.range);
     var labelIndexes = state.range === "1d"
       ? [0, Math.round((values.length - 1) * 0.333), Math.round((values.length - 1) * 0.667), values.length - 1]
       : state.range === "1m"
@@ -250,7 +281,17 @@
 
     // Determine which label indices to show, limiting "all" range to 5 labels max
     var actualLabelIndexes;
-    if (state.range === "all") {
+    if (state.useActualDates) {
+      var labelCount = Math.min(5, values.length);
+      actualLabelIndexes = [];
+      if (labelCount === 1) {
+        actualLabelIndexes.push(0);
+      } else {
+        for (var actualIndex = 0; actualIndex < labelCount; actualIndex++) {
+          actualLabelIndexes.push(Math.round(actualIndex * (values.length - 1) / (labelCount - 1)));
+        }
+      }
+    } else if (state.range === "all") {
       // For "all" range, show at most 5 labels spread evenly across the data
       var maxLabels = 5;
       if (values.length <= maxLabels) {
@@ -267,7 +308,7 @@
       actualLabelIndexes = labelIndexes;
     }
 
-    if (state.range === "1m") {
+    if (state.range === "1m" && !state.useActualDates) {
       var monthLabels = ["Nov 1", "Nov 8", "Nov 15", "Nov 22"];
       var monthFractions = [0.03, 0.31, 0.59, 0.87];
       monthLabels.forEach(function (text, position) {
@@ -289,7 +330,9 @@
         ctx.textAlign = position === 0 ? "left" : position === actualLabelIndexes.length - 1 ? "right" : "center";
         xPos = point.x;
       }
-      var text = values.length === 1
+      var text = state.useActualDates
+        ? dates[index] ? formatObservedDate(dates[index]) : ""
+        : values.length === 1
         ? "Nov 23"
         : state.range === "1d"
         ? ["9 AM", "12 PM", "3 PM", "6 PM"][position]
@@ -311,7 +354,10 @@
       ctx.setLineDash([]);
       ctx.beginPath();
       ctx.arc(hoverPoint.x, hoverPoint.y, 5, 0, Math.PI * 2);
-      ctx.fillStyle = segmentColor(hoverPoint.value, startValue);
+      var hoverStartValue = state.segmentColorByPrevious && state.hoverIndex > 0
+        ? values[state.hoverIndex - 1]
+        : startValue;
+      ctx.fillStyle = segmentColor(hoverPoint.value, hoverStartValue, state.neutralColor);
       ctx.fill();
       ctx.strokeStyle = "#FFFFFF";
       ctx.lineWidth = 2;
@@ -320,8 +366,7 @@
     }
 
     if (values.length === 1) {
-      state.singlePointNote.textContent =
-        "Only 1 data point so far, more points will appear as you approve receipts.";
+      state.singlePointNote.textContent = state.singlePointMessage;
       state.singlePointNote.classList.add("visible");
     } else {
       state.singlePointNote.textContent = "";
@@ -334,7 +379,7 @@
     state.hoverIndex = null;
     state.tooltip.classList.remove("visible");
     if (state.priceElement && state.values.length) {
-      state.priceElement.textContent = "$" + state.values[state.values.length - 1].toFixed(2);
+      state.priceElement.textContent = state.valueFormatter(state.values[state.values.length - 1]);
     }
     if (state.hoverDateElement) state.hoverDateElement.textContent = "";
     draw(state);
@@ -351,16 +396,18 @@
     state.hoverIndex = index;
     state.hovered = true;
 
-    if (state.priceElement) state.priceElement.textContent = "$" + state.values[index].toFixed(2);
+    if (state.priceElement) state.priceElement.textContent = state.valueFormatter(state.values[index]);
     var dates = state.dates && state.dates.length === state.values.length
       ? state.dates.map(function (date) { return new Date(date + "T12:00:00"); })
-      : getDates(state.values.length, state.range);
-    var dateText = formatDate(dates[index], state.range);
+      : state.useActualDates ? [] : getDates(state.values.length, state.range);
+    var dateText = dates[index]
+      ? formatDate(dates[index], state.range, state.useActualDates)
+      : "Date unavailable";
     if (state.hoverDateElement) state.hoverDateElement.textContent = dateText;
 
     var point = layout(state)[index];
     state.tooltip.innerHTML =
-      "<strong>$" + state.values[index].toFixed(2) + "</strong>" +
+      "<strong>" + state.valueFormatter(state.values[index]) + "</strong>" +
       "<span>" + dateText + "</span>";
     var tooltipWidth = 170;
     var left = point.x + 12 + (state.canvas.offsetLeft || 0);
@@ -382,6 +429,15 @@
     state.priceElement = options.priceElement || null;
     state.hoverDateElement = options.hoverDateElement || null;
     state.dates = options.dates || null;
+    state.valueFormatter = options.valueFormatter || function (value) {
+      return "$" + value.toFixed(2);
+    };
+    state.useActualDates = Boolean(options.useActualDates);
+    state.singlePointMessage = options.singlePointMessage ||
+      "Only 1 data point so far, more points will appear as you approve receipts.";
+    state.neutralColor = options.neutralColor || "#FF5000";
+    state.segmentColorByPrevious = Boolean(options.segmentColorByPrevious);
+    state.suppressCurrentValueTick = Boolean(options.suppressCurrentValueTick);
     state.tooltip = state.tooltip || createTooltip(canvas);
     state.singlePointNote = state.singlePointNote || createSinglePointNote(canvas);
     state.hoverIndex = null;
@@ -405,21 +461,27 @@
     }
 
     if (state.priceElement && state.values.length) {
-      state.priceElement.textContent = "$" + state.values[state.values.length - 1].toFixed(2);
+      state.priceElement.textContent = state.valueFormatter(state.values[state.values.length - 1]);
     }
     draw(state);
   }
 
   window.PriceTrackerChart = {
     attach: attach,
-    draw: function (canvas, values, range, priceElement, hoverDateElement, dates) {
+    draw:     function (canvas, values, range, priceElement, hoverDateElement, dates, chartOptions) {
       attach({
         canvas: canvas,
         values: values,
         range: range,
         priceElement: priceElement,
         hoverDateElement: hoverDateElement,
-        dates: dates
+        dates: dates,
+        valueFormatter: chartOptions && chartOptions.valueFormatter,
+        useActualDates: chartOptions && chartOptions.useActualDates,
+        singlePointMessage: chartOptions && chartOptions.singlePointMessage,
+        neutralColor: chartOptions && chartOptions.neutralColor,
+        segmentColorByPrevious: chartOptions && chartOptions.segmentColorByPrevious,
+        suppressCurrentValueTick: chartOptions && chartOptions.suppressCurrentValueTick
       });
     }
   };

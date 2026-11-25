@@ -32,6 +32,10 @@ Where:
 
 A SKU price is the median across in stock retailers per period. The index averages each SKU own percent change, never dollar prices across different products.
 
+## Launch baseline and eligible observations
+
+`index_baseline_period` in `config/settings.yaml` sets Day 1. The current launch baseline is 2026-11-23, and earlier periods do not enter the published index. Observations from `example.com/mock` are not eligible for derived prices. An invalid observation can be kept in the append-only source table and excluded from derived data with a recorded reason in `observation_exclusions`.
+
 ## Worked example
 
 Median price per SKU per day, in dollars:
@@ -63,6 +67,7 @@ This worked example is also a test. See `tests/test_index.py`. The test must use
 | Table | Holds | Rebuildable |
 | --- | --- | --- |
 | observations | timestamp, SKU, retailer, price, in stock flag | No, this is the source of truth |
+| observation_exclusions | raw observation ID and reason it is left out of derived prices | No, audit record |
 | sku_prices | SKU, period, median price | Yes |
 | index_values | category, period, index value, SKUs used | Yes |
 
@@ -82,6 +87,12 @@ Rebuild only in these cases:
 Rebuilding is only possible because we keep the raw observations. Without them, a bad index row would be permanent. With them, any derived table can be regenerated.
 
 Revision rule: if a rebuild ever changes published numbers, the site must say so, since economists will care about revisions. That is how official statistics handle it too. Record the change, the dates affected, and the reason, on the methodology page.
+
+### Published index revision, 2026-11-24
+
+The initial Home page values were not valid market movements. The index history started before the launch baseline and included mock observations. The GPU value of 81.03 on Nov 24 had zero matched SKUs and no valid catalog observations. The CPU values of 89.23 on Nov 23 and 105.96 on Nov 24 included mock history, the old approved $220.00 Ryzen 5 9600X receipt, and a stale Ryzen 7 9800X3D derived row without a matching raw observation. The RAM value of 268.02 on Nov 23 came from mock history for the Corsair Vengeance 32GB DDR5-6000 CL30 kit; there was no Nov 24 RAM observation.
+
+The derived tables were rebuilt with Nov 23 as Day 1. The corrected Nov 23 values are 100.00 for GPUs, CPUs, and RAM, using 9, 10, and 7 SKUs. There are no valid post-baseline observations yet, so no later category change is published. The 87 mock observations and the old receipt remain in the raw observation table, but they no longer affect derived prices.
 
 ## Known v1 limits, stated openly on the site
 

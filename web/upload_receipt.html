@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Upload a Price - Price Tracker</title>
+  <title>Upload a price - Price Tracker</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -21,46 +21,68 @@
 
   <main class="submission-page">
     <section class="submission-heading">
-      <h1>Upload a Price</h1>
-      <p>Retailer sold only. Third party sellers will be rejected.</p>
+      <h1>Upload a price</h1>
+      <p>Photograph a shelf tag or a product page. The app reads the text on your computer, suggests the model, and you confirm before anything is added.</p>
     </section>
 
-    <section class="submission-card">
-      <form id="upload-form" enctype="multipart/form-data">
-        <label for="model-id">Model</label>
-        <select id="model-id" name="model_id" required></select>
+    <section class="steps-bar">
+       <div class="step active">1 Photo read</div>
+       <div class="step">2 Check the details</div>
+       <div class="step">3 Submit for review</div>
+     </section>
 
-        <label for="retailer">Retailer</label>
-        <select id="retailer" name="retailer" required></select>
+     <section class="submission-layout">
+       <section class="photo-panel">
+         <h2>Your photo</h2>
+         <div class="photo-wrapper" id="photo-wrapper">
+           <input type="file" accept="image/*" id="photo-input" />
+           <p class="empty-photo">No photo uploaded</p>
+         </div>
+         <p class="photo-instructions">Drag and drop a photo here, or <a href="#" id="choose-photo-link">choose a file</a></p>
+         <div class="ocr-panel">
+           <h3>Text found in photo</h3>
+           <pre id="ocr-text" class="ocr-text">Waiting for OCR...</pre>
+         </div>
+       </section>
 
-        <label for="photo">Receipt or price tag photo</label>
-        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/bmp,image/tiff,image/webp" required>
-
-        <button class="primary-button" type="submit">Upload and run OCR</button>
-      </form>
-      <div id="result" class="submission-result" aria-live="polite"></div>
-    </section>
+       <section class="best-match-panel">
+         <h2>Best match</h2>
+         <div class="match-info" id="match-info">
+           <p class="confidence">Confidence: --%</p>
+           <p class="category">Category: --</p>
+           <p class="model">Model: --</p>
+           <p class="price usd-price">Price in USD: --</p>
+           <p class="retailer">Retailer: --</p>
+         </div>
+         <p class="price-note" id="price-note">The price above matches the price found in the photo.</p>
+         <label class="seller-checkbox">
+           <input type="checkbox" id="seller-checkbox" disabled="" aria-label="Item sold or fulfilled by retailer">
+           Item is sold or fulfilled by the retailer itself and not a third-party seller
+         </label>
+         <div class="actions">
+           <button class="primary-button" id="submit-button" disabled="">Submit for review</button>
+           
+         </div>
+       </section>
+     </section>
   </main>
 
   <script>
-    async function loadOptions() {
+    async function loadReceiptOptions() {
       const options = await fetch("/api/receipt-options").then(r => r.ok ? r.json() : {models: [], retailers: []});
       const categoryOrder = {GPUs: 0, CPUs: 1, RAM: 2};
-      options.models.sort((a, b) =>
-        (categoryOrder[a.category] ?? 99) - (categoryOrder[b.category] ?? 99) ||
-        a.model.localeCompare(b.model)
-      );
-      document.querySelector("#model-id").innerHTML = options.models.map(p =>
-        `<option value="${p.id}">${p.category}: ${p.model}</option>`
-      ).join("");
-      document.querySelector("#retailer").innerHTML = options.retailers.map(r =>
-        `<option value="${r.id}">${r.name}</option>`
-      ).join("");
+      const modelSelect = document.querySelector("#model-id");
+      if (modelSelect.options.length === 0 || modelSelect.options[0].value === "") {
+        modelSelect.innerHTML = options.models.map(p => `<option value="${p.id}">${p.category}: ${p.model}</option>`).join("");
+      }
+      const retailerSelect = document.querySelector("#retailer");
+      if (retailerSelect.options.length === 0 || retailerSelect.options[0].value === "") {
+        retailerSelect.innerHTML = options.retailers.map(r => `<option value="${r.id}">${r.name}</option>`).join("");
+      }
     }
 
     document.querySelector("#upload-form").addEventListener("submit", async event => {
       event.preventDefault();
-      const result = document.querySelector("#result");
       result.textContent = "Running OCR...";
       const response = await fetch("/upload-receipt", {
         method: "POST",
@@ -69,18 +91,38 @@
       const data = await response.json();
       if (!response.ok) {
         result.textContent = data.detail || "Upload failed";
-        return;
+      } else {
+        const price = data.suggested_price_dollars === null
+          ? "Not found"
+          : "$" + data.suggested_price_dollars.toFixed(2);
+        result.innerHTML =
+          `<p><strong>Status:</strong> pending</p>` +
+          `<p><strong>Suggested price:</strong> ${price}</p>` +
+          `<p>It will be reviewed before it goes live.</p>`;
       }
-      const price = data.suggested_price_dollars === null
-        ? "Not found"
-        : "$" + data.suggested_price_dollars.toFixed(2);
-      result.innerHTML =
-        `<p><strong>Status:</strong> pending</p>` +
-        `<p><strong>Suggested price:</strong> ${price}</p>` +
-        `<p>It will be reviewed before it goes live.</p>`;
     });
 
-    loadOptions();
+    loadReceiptOptions();
+    async function loadWaitingSubmissions() {
+      const response = await fetch("/api/receipt-submissions");
+      const data = await response.json();
+      const submissions = data.submissions.filter(s => s.status === "pending");
+      const container = document.querySelector("#waiting-list");
+      if (!submissions.length) {
+        container.innerHTML = '<p class="empty-review">No pending submissions for review.</p>';
+        return;
+      }
+      container.innerHTML = submissions.map(s => {
+        const priceStr = s.suggested_price_cents === null ? "Not found" : "$" + (s.suggested_price_cents / 100).toFixed(2);
+        return '<article class="review-card"><div class="review-details"><p><strong>Model:</strong> ' + s.model_name + ' (' + s.model_id + ')</p>' +
+              '<p><strong>Retailer:</strong> ' + s.retailer + '</p>' +
+              '<p><strong>Suggested price:</strong> ' + priceStr + '</p>' +
+              '<p><strong>Date submitted:</strong> ' + s.created_at + '</p>' +
+              '<p><strong>Status:</strong> pending</p>' +
+              '<pre>' + (s.ocr_text || '') + '</pre></div></article>';
+      }).join("");
+    }
+    loadWaitingSubmissions();
   </script>
 </body>
 </html>

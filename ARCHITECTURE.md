@@ -150,6 +150,9 @@ Endpoints, all JSON, all read only in v1:
 - `GET /api/indexes/{category}` : index_values rows for one category, with period, index value, and SKUs used.
 - `GET /api/products` : list of tracked SKUs, with brand, model, category, and current median price.
 - `GET /api/products/{sku}` : sku_prices rows for one SKU, with period, median price, and retailers used.
+- `GET /api/catalog` : tracked products with eligible price points and configured current offers.
+- `GET /api/products/{sku}/retailer-prices` : retailer observations, source labels, exclusion and mock flags, and configured product URLs.
+- `GET /api/retailers` : retailer IDs and names for display.
 - `GET /api/movers?range=1d` : biggest movers, largest price drops and rises, from sku_prices. Range is 1d or 1w in the prototype.
 - `GET /api/health` : database file exists, row counts for observations, sku_prices, and index_values.
 

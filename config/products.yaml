@@ -7,7 +7,13 @@ products:
     chip: "RTX 5060"
     architecture: "Blackwell"
     urls:
-      newegg: "https://rtx.live/cards/msi-geforce-rtx-5060-ventus-2x-oc"
+      newegg: "https://www.newegg.com/msi-rtx-5060-8g-ventus-2x-oc-geforce-rtx-5060-8gb-graphics-card-double-fans/p/N82E16814137975"
+    home_offer:
+      price_cents: 51999
+      retailer_ids: [newegg]
+      checked_on: "2026-11-24"
+      availability: "In stock"
+      source: "mega-price-search-2026-11-24.md"
   - id: gigabyte-rtx-5060-ti-windforce-oc-16gb
     mpn: "GV-N506TWF2OC-16GD"
     brand: "Gigabyte"
@@ -16,7 +22,14 @@ products:
     chip: "RTX 5060 Ti 16GB"
     architecture: "Blackwell"
     urls:
-      newegg: "https://rtx.live/cards/gigabyte-geforce-rtx-5060-ti-windforce-overclocked-dual-fan-16gb-gddr7"
+      newegg: "https://www.newegg.com/gigabyte-windforce-gv-n506twf2oc-16gd-geforce-rtx-5060-ti-16gb-graphics-card-double-fans/p/N82E16814932790"
+      microcenter: "https://www.microcenter.com/product/694739/gigabyte-nvidia-geforce-rtx-5060-ti-windforce-overclocked-dual-fan-16gb-gddr7-pcie-50-graphics-card"
+    home_offer:
+      price_cents: 82999
+      retailer_ids: [newegg, microcenter]
+      checked_on: "2026-11-24"
+      availability: "Newegg in stock, Micro Center in-store only"
+      source: "mega-price-search-2026-11-24.md"
   - id: msi-rtx-5070-ventus-2x-oc
     mpn: "G5070-12V2C"
     brand: "Nvidia"
@@ -26,6 +39,13 @@ products:
     architecture: "Blackwell"
     urls:
       msi: "https://us-store.msi.com/GeForce-RTX-5070-12G-VENTUS-2X-OC"
+      newegg: "https://www.newegg.com/msi-rtx-5070-12g-ventus-2x-oc-geforce-rtx-5070-12gb-graphics-card-double-fans/p/N82E16814137943T"
+    home_offer:
+      price_cents: 89999
+      retailer_ids: [newegg]
+      checked_on: "2026-11-24"
+      availability: "Out of stock"
+      source: "mega-price-search-2026-11-24.md"
   - id: gigabyte-rtx-5070-ti-gaming-oc-16gb
     mpn: "GV-N507TGAMING OC-16GD"
     brand: "Gigabyte"
@@ -99,6 +119,12 @@ products:
     urls:
       microcenter: "https://www.microcenter.com/product/687907/amd-ryzen-7-9800x3d-granite-ridge-am5-470ghz-8-core-boxed-processor-heatsink-not-included"
       bh: "https://www.bhphotovideo.com/c/product/1859346-REG/amd_100_100001084wof_ryzen_7_9800x3d_am5.html"
+    home_offer:
+      price_cents: 37999
+      retailer_ids: [microcenter]
+      checked_on: "2026-11-24"
+      availability: "In-store pickup only"
+      source: "mega-price-search-2026-11-24.md"
   - id: amd-ryzen-5-7600x
     mpn: "100-100000593WOF"
     brand: "AMD"
@@ -126,6 +152,12 @@ products:
     architecture: "Zen 5"
     urls:
       microcenter: "https://www.microcenter.com/product/682196/amd-ryzen-5-9600x-granite-ridge-am5-390ghz-6-core-boxed-processor-heatsink-not-included"
+    home_offer:
+      price_cents: 15999
+      retailer_ids: [microcenter]
+      checked_on: "2026-11-24"
+      availability: "Micro Center price"
+      source: "mega-price-search-2026-11-24.md"
   - id: amd-ryzen-7-9700x
     mpn: "100-100001404WOF"
     brand: "AMD"
@@ -189,7 +221,13 @@ products:
     chip: "DDR5-6000 CL30"
     architecture: "DDR5"
     urls:
-      bh: "https://pctechvault.com/market-watch/corsair-vengeance-32-gb-ddr5-6000-cl30/?component=cpu&region=US&market=new-retail"
+      newegg: "https://www.newegg.com/corsair-vengeance-32gb-ddr5-6000-cas-latency-cl30-desktop-memory-gray/p/N82E16820982040"
+    home_offer:
+      price_cents: 51999
+      retailer_ids: [newegg]
+      checked_on: "2026-11-24"
+      availability: "In stock"
+      source: "mega-price-search-2026-11-24.md"
   - id: gskill-trident-z5-neo-rgb-32gb-ddr5-6000-cl30
     mpn: "F5-6000J3038F16GX2-TZ5NR"
     brand: "G.Skill"

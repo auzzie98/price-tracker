@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
   <title>Price Tracker</title>
-  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body>
+<body class="home-document">
   <header class="header-bar">
     <a class="header-logo" href="/">Price Tracker</a>
     <nav class="header-nav" aria-label="Primary navigation">
@@ -18,376 +20,128 @@
     </nav>
   </header>
 
-  <!-- Model pills row (replaces indices pills) -->
-  <div class="model-pills" id="model-pills"></div>
+  <main class="home-page">
+    <section class="home-hero" aria-labelledby="home-title">
+      <p class="home-kicker">Prices tracked from Nov 23, 2026</p>
+      <h1 id="home-title">PC part prices, charted like a market</h1>
+      <p class="home-intro">Prices for GPUs, CPUs, and RAM kits, based on checked retailer prices.</p>
+      <dl class="home-stats" aria-label="Live tracker statistics">
+        <div>
+          <dt>Models tracked</dt>
+          <dd id="stat-models">Loading</dd>
+        </div>
+        <div>
+          <dt>Price records</dt>
+          <dd id="stat-observations">Loading</dd>
+        </div>
+        <div>
+          <dt>Retailers listed</dt>
+          <dd id="stat-retailers">Loading</dd>
+        </div>
+        <div>
+          <dt>Last price added</dt>
+          <dd id="stat-approved-date">Loading</dd>
+        </div>
+      </dl>
+    </section>
 
-  <!-- Trend chart -->
-  <section class="trend-section">
-    <h2 class="trend-title">Trend</h2>
-    <p class="trend-subtitle">Price in dollars for the selected model.</p>
-    <div class="trend-legend">
-      <div>
-        <div class="trend-model-name" id="trend-model-name">Model</div>
-        <div class="trend-price-row">
-          <span class="trend-price" id="trend-price">$0.00</span>
-          <span class="trend-change" id="trend-change">0.0%</span>
+    <section class="home-section index-section" aria-labelledby="index-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="index-title">Market overview</h2>
+          <p>Category values use saved price records. Current retailer offers appear in the table below.</p>
+        </div>
+        <a href="/methodology.html">How these values are calculated</a>
+      </div>
+      <div class="index-layout">
+        <div class="index-chart-panel">
+          <div class="index-chart-heading">
+            <div>
+              <p id="index-chart-category">GPUs</p>
+              <strong id="index-chart-value">Loading</strong>
+            </div>
+            <span id="index-chart-change" class="change-neutral">Loading</span>
+          </div>
+          <canvas id="index-chart" aria-label="Category price chart"></canvas>
+          <div class="chart-ranges" role="group" aria-label="Chart date range">
+            <button type="button" class="range-button active" data-range="1d">1D</button>
+            <button type="button" class="range-button" data-range="1w">1W</button>
+            <button type="button" class="range-button" data-range="1m">1M</button>
+            <button type="button" class="range-button" data-range="1y">1Y</button>
+            <button type="button" class="range-button" data-range="all">All</button>
+          </div>
+          <p class="chart-note">Values start at 100 on Nov 23, 2026. Green means prices fell, which is good for buyers. Red means prices rose, which is bad for buyers.</p>
+        </div>
+        <div id="index-cards" class="index-cards" aria-label="Category price levels">
+          <p class="loading-state">Loading price levels.</p>
         </div>
       </div>
-      <div class="trend-hover-date" id="trend-hover-date"></div>
-    </div>
-    <canvas id="main-chart" width="1000" height="300"></canvas>
-  </section>
+    </section>
 
-  <!-- Time toggles below chart -->
-  <div class="time-toggles">
-    <button class="toggle" data-range="1d">1D</button>
-    <button class="toggle" data-range="1w">1W</button>
-    <button class="toggle active" data-range="1m">1M</button>
-    <button class="toggle" data-range="1y">1Y</button>
-    <button class="toggle" data-range="all">All</button>
-  </div>
+    <section class="home-section movers-section" aria-labelledby="movers-title">
+      <h2 id="movers-title">Biggest drops and jumps</h2>
+      <p class="section-description">A part needs two price records for a change to appear.</p>
+      <div class="movers-grid">
+        <section class="mover-panel" aria-labelledby="cheaper-title">
+          <h3 id="cheaper-title">Getting cheaper</h3>
+          <ul id="cheaper-list" class="mover-list">
+            <li class="loading-state">Loading price changes.</li>
+          </ul>
+        </section>
+        <section class="mover-panel" aria-labelledby="pricier-title">
+          <h3 id="pricier-title">Getting pricier</h3>
+          <ul id="pricier-list" class="mover-list">
+            <li class="loading-state">Loading price changes.</li>
+          </ul>
+        </section>
+      </div>
+    </section>
 
-  <!-- Price color explanation -->
-  <p class="price-label">Green means cheaper, red means more expensive.</p>
+    <section class="home-section models-section" aria-labelledby="models-title">
+      <div class="section-heading models-heading">
+        <div>
+          <h2 id="models-title">Every part we track</h2>
+          <p class="section-description">Changes need prices from matching dates. The small charts show prices from Nov 23 onward.</p>
+        </div>
+        <label class="sort-control" for="model-sort">
+          Sort by
+          <select id="model-sort">
+            <option value="category-price">Category, then price</option>
+            <option value="price-low-high">Price, low to high</option>
+            <option value="price-high-low">Price, high to low</option>
+            <option value="change-7d">7 day change</option>
+            <option value="change-30d">30 day change</option>
+          </select>
+        </label>
+      </div>
+      <div class="model-filters" role="group" aria-label="Filter models by category">
+        <button type="button" class="filter-button active" data-category="all">All parts</button>
+        <button type="button" class="filter-button" data-category="GPUs">GPUs</button>
+        <button type="button" class="filter-button" data-category="CPUs">CPUs</button>
+        <button type="button" class="filter-button" data-category="RAM">RAM</button>
+      </div>
+      <p id="model-count" class="model-count" aria-live="polite">Loading models.</p>
+      <div class="models-table-wrap">
+        <table class="models-table">
+          <thead>
+            <tr>
+              <th scope="col">Model</th>
+              <th scope="col">Category</th>
+              <th scope="col">Latest price</th>
+              <th scope="col">7 day change</th>
+              <th scope="col">30 day change</th>
+              <th scope="col">Price trend</th>
+              <th scope="col">Retailers</th>
+            </tr>
+          </thead>
+          <tbody id="models-table-body">
+            <tr><td class="loading-state" colspan="7">Loading models.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
-  <!-- Individual models section -->
-  <div class="individual-models">
-    <h3 class="section-header">Individual models</h3>
-    <p class="model-label">Real data, baseline Nov 23, 2026, Black Friday week snapshot.</p>
-    <div class="model-list" id="catalog-model-list"></div>
-  </div>
-
-  <script src="/static/js/chart.js"></script>
-  <script>
-    function drawChart(canvasId, values) {
-      var canvas = document.getElementById(canvasId);
-      if (!canvas) return;
-      var ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      var min = Math.min.apply(null, values);
-      var max = Math.max.apply(null, values);
-      if (max === min) max = min + 1;
-      var up = values[values.length - 1] >= values[0];
-      ctx.strokeStyle = up ? '#00C805' : '#FF5000';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      values.forEach(function(v, i) {
-        var x = i / (values.length - 1) * canvas.width;
-        var y = canvas.height - (v - min) / (max - min) * canvas.height;
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-    }
-    async function loadIndexData(range) {
-      try {
-        const indexesResp = await fetch('/api/indexes');
-        if (!indexesResp.ok) throw new Error('Failed to fetch indexes');
-        const indexes = await indexesResp.json();
-        const cpuData = indexes.categories.find(c => c.category === 'CPUs');
-        const gpuData = indexes.categories.find(c => c.category === 'GPUs');
-        const ramData = indexes.categories.find(c => c.category === 'RAM');
-        if (cpuData) {
-          document.getElementById('cpu-index').textContent = cpuData.index_value.toFixed(2);
-          document.getElementById('cpu-change').textContent = '0.0%';
-          drawChart('cpu-chart', [cpuData.index_value]);
-        }
-        if (gpuData) {
-          document.getElementById('gpu-index').textContent = gpuData.index_value.toFixed(2);
-          document.getElementById('gpu-change').textContent = '0.0%';
-          drawChart('gpu-chart', [gpuData.index_value]);
-        }
-        if (ramData) {
-          document.getElementById('ram-index').textContent = ramData.index_value.toFixed(2);
-          document.getElementById('ram-change').textContent = '0.0%';
-          drawChart('ram-chart', [ramData.index_value]);
-        }
-      } catch (err) {
-        console.error('Failed to load index data:', err);
-      }
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-      // Main chart setup
-      var mainChartCanvas = document.getElementById('main-chart');
-      var mainChartValues = [];
-      var mainChartDates = [];
-      var liveModels = {};
-      var liveMainModelId = 'rtx2060';
-      async function loadCatalog() {
-        try {
-          var response = await fetch('/api/catalog');
-          if (!response.ok) return;
-          var data = await response.json();
-          var featured = data.products.slice(0, 5);
-          document.getElementById('model-pills').innerHTML = featured.map(function(product, index) {
-            var price = product.price_cents === null
-              ? 'No data yet'
-              : '$' + (product.price_cents / 100).toFixed(2);
-            return '<button class="pill ' + (index === 0 ? 'active' : '') + '" data-model="' +
-              product.id + '"><span class="pill-name">' + product.model +
-              '</span><span class="pill-details">' + price + '</span></button>';
-          }).join('');
-          document.getElementById('catalog-model-list').innerHTML = data.products.map(function(product) {
-            var price = product.price_cents === null
-              ? 'No data yet'
-              : '$' + (product.price_cents / 100).toFixed(2);
-            return '<div class="model-row"><a class="model-name" href="/product/' + product.id + '">' +
-              product.model + '</a><span class="model-price">' + price +
-              '</span><span class="model-change"></span><div class="model-sparkline"><canvas data-model="' +
-              product.id + '" width="80" height="30"></canvas></div></div>';
-          }).join('');
-
-          featured.forEach(function(product) {
-            liveModels[product.id] = product;
-          });
-          if (featured.length) {
-            liveMainModelId = featured[0].id;
-            loadLiveHistory(featured[0].id);
-          }
-          attachCatalogPills();
-          drawLiveSparklines();
-        } catch (error) {
-          console.error('Failed to load live catalog:', error);
-        }
-      }
-
-      async function loadLiveHistory(modelId) {
-        liveMainModelId = modelId;
-        try {
-          var response = await fetch('/api/products/' + encodeURIComponent(modelId) + '/history');
-          if (!response.ok) {
-            mainChartValues = [];
-            mainChartDates = [];
-            drawMainChartUI();
-            return;
-          }
-          var data = await response.json();
-          mainChartValues = data.history.map(function(point) {
-            return point.median_price_dollars;
-          });
-          mainChartDates = data.history.map(function(point) { return point.date; });
-          var model = liveModels[modelId];
-          if (model) {
-            document.getElementById('trend-model-name').textContent = model.model;
-            document.getElementById('trend-change').textContent =
-              mainChartValues.length > 1
-                ? ((mainChartValues[mainChartValues.length - 1] - mainChartValues[0]) / mainChartValues[0] * 100).toFixed(1) + '%'
-                : '0.0%';
-          }
-          drawMainChartUI();
-        } catch (error) {
-          mainChartValues = [];
-          mainChartDates = [];
-          drawMainChartUI();
-        }
-      }
-
-      function attachCatalogPills() {
-        document.querySelectorAll('.pill').forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            document.querySelectorAll('.pill').forEach(function(pill) { pill.classList.remove('active'); });
-            btn.classList.add('active');
-            loadLiveHistory(btn.dataset.model);
-          });
-        });
-      }
-      var selectedRange = '1m';
-
-      function drawMainChartUI() {
-        var canvas = mainChartCanvas;
-        if (!canvas) return;
-
-        var dpr = window.devicePixelRatio || 1;
-        var cssWidth = Math.max(1, canvas.clientWidth || canvas.offsetWidth);
-        var cssHeight = 300;
-        canvas.setAttribute('width', Math.round(cssWidth * dpr));
-        canvas.setAttribute('height', Math.round(cssHeight * dpr));
-
-        var ctx = canvas.getContext('2d');
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, cssWidth, cssHeight);
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, cssWidth, cssHeight);
-
-        var dataMin = Math.min.apply(null, mainChartValues);
-        var dataMax = Math.max.apply(null, mainChartValues);
-        var range = dataMax - dataMin;
-        if (range === 0) range = Math.abs(dataMax) * 0.1 || 1;
-        var chartMin = dataMin - range * 0.05;
-        var chartMax = dataMax + range * 0.05;
-        var chartRange = chartMax - chartMin;
-        var labelGutter = 72;
-        var plotWidth = Math.max(1, cssWidth - labelGutter);
-        var topPadding = 12;
-        var bottomPadding = 32;
-        var plotHeight = cssHeight - topPadding - bottomPadding;
-
-        function pointX(index) {
-          if (mainChartValues.length === 1) return plotWidth / 2;
-          return index / (mainChartValues.length - 1) * plotWidth;
-        }
-
-        function pointY(value) {
-          return topPadding + (chartMax - value) / chartRange * plotHeight;
-        }
-
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        var startingPrice = mainChartValues[0];
-
-        function drawColoredSegment(startIndex, startValue, endIndex, endValue) {
-          var startToStarting = Math.round(startValue * 100) - Math.round(startingPrice * 100);
-          var endToStarting = Math.round(endValue * 100) - Math.round(startingPrice * 100);
-
-          if (endToStarting > 0) {
-            ctx.strokeStyle = '#FF5000';
-          } else if (endToStarting < 0) {
-            ctx.strokeStyle = '#00C805';
-          } else if (startToStarting > 0) {
-            ctx.strokeStyle = '#FF5000';
-          } else if (startToStarting < 0) {
-            ctx.strokeStyle = '#00C805';
-          } else {
-            ctx.strokeStyle = endToStarting >= 0 ? '#FF5000' : '#00C805';
-          }
-
-          ctx.beginPath();
-          ctx.moveTo(pointX(startIndex), pointY(startValue));
-          ctx.lineTo(pointX(endIndex), pointY(endValue));
-          ctx.stroke();
-        }
-
-        for (var i = 0; i < mainChartValues.length - 1; i++) {
-          var startPrice = mainChartValues[i];
-          var endPrice = mainChartValues[i + 1];
-          var startCents = Math.round(startPrice * 100);
-          var endCents = Math.round(endPrice * 100);
-          var startingCents = Math.round(startingPrice * 100);
-
-          if ((startCents < startingCents && endCents > startingCents) ||
-              (startCents > startingCents && endCents < startingCents)) {
-            var fraction = (startingCents - startCents) / (endCents - startCents);
-            var crossingIndex = i + fraction;
-            var crossingX = crossingIndex / (mainChartValues.length - 1) * plotWidth;
-            var startIsAbove = startCents > startingCents;
-
-            ctx.beginPath();
-            ctx.moveTo(pointX(i), pointY(startPrice));
-            ctx.lineTo(crossingX, pointY(startingPrice));
-            ctx.strokeStyle = startIsAbove ? '#FF5000' : '#00C805';
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(crossingX, pointY(startingPrice));
-            ctx.lineTo(pointX(i + 1), pointY(endPrice));
-            ctx.strokeStyle = endCents > startingCents ? '#FF5000' : '#00C805';
-            ctx.stroke();
-          } else {
-            drawColoredSegment(i, startPrice, i + 1, endPrice);
-          }
-        }
-
-        ctx.fillStyle = '#9CA3AF';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('$' + chartMax.toFixed(2), cssWidth - labelGutter + 10, pointY(chartMax));
-        ctx.fillText('$' + ((chartMin + chartMax) / 2).toFixed(2), cssWidth - labelGutter + 10, cssHeight / 2);
-        ctx.fillText('$' + chartMin.toFixed(2), cssWidth - labelGutter + 10, pointY(chartMin));
-
-        // Mock dates for the selected time period
-        var mockLabels = {
-          '1d': ['9 AM', '12 PM', '3 PM', '6 PM'],
-          '1w': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          '1m': ['Nov 1', 'Nov 8', 'Nov 15', 'Nov 22'],
-          '1y': ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov'],
-          'all': ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov']
-        };
-        var labels = mockLabels[selectedRange] || mockLabels['1d'];
-        ctx.fillStyle = '#9CA3AF';
-        ctx.font = '11px Arial';
-        ctx.textBaseline = 'middle';
-        labels.forEach(function(label, index) {
-          var xIndex = labels.length === 1 ? 0 : index / (labels.length - 1) * (mainChartValues.length - 1);
-          ctx.textAlign = index === 0 ? 'left' : (index === labels.length - 1 ? 'right' : 'center');
-          ctx.fillText(label, pointX(xIndex), cssHeight - 12);
-        });
-        if (window.PriceTrackerChart) {
-          window.PriceTrackerChart.draw(
-            mainChartCanvas,
-            mainChartValues,
-            selectedRange,
-            document.getElementById('trend-price'),
-            document.getElementById('trend-hover-date'),
-            mainChartDates
-          );
-        }
-      }
-      
-      // Draw the main chart initially
-      drawMainChartUI();
-      window.addEventListener('resize', drawMainChartUI);
-
-      function drawSparklines() {
-        document.querySelectorAll('.model-sparkline canvas').forEach(function(canvas) {
-          var modelId = canvas.dataset.model;
-          if (!modelId) return;
-          fetch('/api/products/' + encodeURIComponent(modelId) + '/history')
-            .then(function(response) { return response.ok ? response.json() : null; })
-            .then(function(data) {
-              var values = data && data.history.length
-                ? data.history.map(function(point) { return point.median_price_dollars; })
-                : [];
-              var width = 80;
-              var height = 30;
-              var dpr = window.devicePixelRatio || 1;
-              canvas.width = width * dpr;
-              canvas.height = height * dpr;
-              var ctx = canvas.getContext('2d');
-              ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-              ctx.fillStyle = '#121212';
-              ctx.fillRect(0, 0, width, height);
-              if (!values.length) return;
-              var min = Math.min.apply(null, values);
-              var max = Math.max.apply(null, values);
-              var spread = max - min || Math.abs(max) * 0.1 || 1;
-              var chartMin = min - spread * 0.05;
-              var chartMax = max + spread * 0.05;
-              var startCents = Math.round(values[0] * 100);
-              ctx.lineWidth = 2;
-              ctx.lineCap = 'butt';
-              ctx.lineJoin = 'miter';
-              for (var i = 0; i < values.length - 1; i++) {
-                var x1 = i / (values.length - 1) * width;
-                var x2 = (i + 1) / (values.length - 1) * width;
-                var y1 = 2 + (chartMax - values[i]) / (chartMax - chartMin) * 26;
-                var y2 = 2 + (chartMax - values[i + 1]) / (chartMax - chartMin) * 26;
-                var endCents = Math.round(values[i + 1] * 100);
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.strokeStyle = endCents < startCents ? '#00C805' : '#FF5000';
-                ctx.stroke();
-              }
-            })
-            .catch(function() {});
-        });
-      }
-
-      drawSparklines();
-      window.addEventListener('resize', drawSparklines);
-      
-      // Time toggle handlers
-      document.querySelectorAll('.toggle').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          document.querySelector('.toggle.active').classList.remove('active');
-          this.classList.add('active');
-          selectedRange = this.dataset.range;
-          drawMainChartUI();
-        });
-      });
-      loadCatalog();
-    });
-  </script>
+  <script src="/static/js/home.js"></script>
 </body>
 </html>

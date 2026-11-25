@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Graphics cards - Price Tracker</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="gpu-document">
+  <header class="header-bar">
+    <a class="header-logo" href="/">Price Tracker</a>
+    <nav class="header-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a class="active" href="/gpus" aria-current="page">GPUs</a>
+      <a href="/cpus">CPUs</a>
+      <a href="/ram">RAM</a>
+      <a href="/methodology">Methodology</a>
+      <a href="/upload-receipt">Upload a Price</a>
+    </nav>
+  </header>
+
+  <main class="gpu-page">
+    <nav class="gpu-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true"> / </span>
+      <span aria-current="page">GPUs</span>
+    </nav>
+
+    <section class="gpu-heading">
+      <h1>Graphics cards</h1>
+      <p>Ten GPUs, tracked by median retailer price. Pick a card to see its history and where it is in stock.</p>
+      <p class="gpu-baseline-note">The index starts at 100 on Nov 23, 2026.</p>
+    </section>
+
+    <section class="gpu-index-panel" aria-labelledby="gpu-index-title">
+      <div class="gpu-index-header">
+        <div>
+          <h2 id="gpu-index-title">GPU price index</h2>
+          <p>Index value, Nov 23, 2026 = 100</p>
+        </div>
+        <div class="gpu-index-reading">
+          <span>Current index value</span>
+          <strong id="gpu-index-value">Loading...</strong>
+        </div>
+      </div>
+      <div class="gpu-chart-wrap">
+        <canvas id="gpu-index-chart" aria-label="GPU price index over time"></canvas>
+        <p id="gpu-index-status" class="gpu-chart-status" aria-live="polite">Loading index data...</p>
+      </div>
+      <div class="gpu-chart-footer">
+        <div class="gpu-range-controls" role="group" aria-label="Index chart range">
+          <button type="button" class="gpu-range-button" data-range="1d">1D</button>
+          <button type="button" class="gpu-range-button" data-range="1w">1W</button>
+          <button type="button" class="gpu-range-button active" data-range="1m" aria-pressed="true">1M</button>
+          <button type="button" class="gpu-range-button" data-range="1y">1Y</button>
+          <button type="button" class="gpu-range-button" data-range="all">All</button>
+        </div>
+        <p class="gpu-colour-note"><span class="change-cheaper">Green</span> means prices dropped. <span class="change-pricier">Red</span> means prices rose.</p>
+      </div>
+    </section>
+
+    <section class="gpu-stats" aria-label="GPU price statistics">
+      <article class="gpu-stat-card">
+        <h2>Lowest price</h2>
+        <p id="gpu-lowest-price">Loading...</p>
+      </article>
+      <article class="gpu-stat-card">
+        <h2>Highest price</h2>
+        <p id="gpu-highest-price">Loading...</p>
+      </article>
+      <article class="gpu-stat-card">
+        <h2>Median of models</h2>
+        <p id="gpu-median-price">Loading...</p>
+      </article>
+      <article class="gpu-stat-card">
+        <h2>Observations</h2>
+        <p id="gpu-observation-count">Loading...</p>
+      </article>
+    </section>
+
+    <section class="gpu-model-section" aria-labelledby="gpu-models-title">
+      <div class="gpu-model-heading">
+        <div>
+          <h2 id="gpu-models-title">GPUs tracked</h2>
+          <p id="gpu-model-count">Loading catalog...</p>
+        </div>
+        <label class="gpu-sort-control" for="gpu-sort">
+          <span>Sort by</span>
+          <select id="gpu-sort">
+            <option value="drop">Biggest 30-day drop</option>
+            <option value="rise">Biggest 30-day rise</option>
+            <option value="lowest">Lowest price</option>
+            <option value="highest">Highest price</option>
+            <option value="model">Model A to Z</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="gpu-maker-filters" role="group" aria-label="Filter by chip maker">
+        <button type="button" class="gpu-filter-button active" data-maker="all" aria-pressed="true">All</button>
+        <button type="button" class="gpu-filter-button" data-maker="NVIDIA" aria-pressed="false">NVIDIA</button>
+        <button type="button" class="gpu-filter-button" data-maker="AMD" aria-pressed="false">AMD</button>
+        <button type="button" class="gpu-filter-button" data-maker="Intel" aria-pressed="false">Intel</button>
+      </div>
+
+      <div class="gpu-table-wrap">
+        <table class="gpu-table">
+          <caption class="visually-hidden">GPU median prices, price changes, trends, and source retailers</caption>
+          <thead>
+            <tr>
+              <th scope="col">Model</th>
+              <th scope="col">Maker</th>
+              <th scope="col">Median price</th>
+              <th scope="col">7 days</th>
+              <th scope="col">30 days</th>
+              <th scope="col">30-day trend</th>
+              <th scope="col">Prices</th>
+            </tr>
+          </thead>
+          <tbody id="gpu-table-body">
+            <tr><td colspan="7" class="gpu-table-message">Loading GPU models...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="gpu-source-note">Prices are medians from in-stock observations. Source retailer links open the exact product page.</p>
+    </section>
+
+    <p class="gpu-methodology-link"><a href="/methodology">How prices and the index are calculated</a></p>
+  </main>
+
+  <script src="/static/js/chart.js"></script>
+  <script src="/static/js/gpus.js"></script>
+</body>
+</html>

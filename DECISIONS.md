@@ -34,3 +34,5 @@ Add a row when something new is decided, and change one if we reverse it. Date, 
 | Refresh | 6 hours chosen because retailers are blocked for live scraping, mock data is used for prototype, and 6 hours equates to 4 checks per day per page, keeping volume modest | 2026-11-22 |
 | Model | Nemotron 3.5 Super VL, 120B total, 12B active, context up to 1M tokens in the weights, hosted page lists 262K, plan work for 262K | 2026-11-22 |
 | Scraper test | Headless browser test only for Best Buy first, after plain Requests fetch was blocked with HTTP 403 Cloudflare for all 5 retailers; no full scraper built yet | 2026-11-22 |
+| Index correction | Set the published baseline to 2026-11-23, exclude mock-source observations, and exclude approved observation 147 because its $220.00 receipt is old, while preserving all raw observations | 2026-11-24 |
+| Index rebuild | Backed up data/price-tracker.db to data/price-tracker.db.before-home-index-rebuild-2026-11-24.bak before rebuilding | 2026-11-24 |

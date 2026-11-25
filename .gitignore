@@ -8,6 +8,7 @@ venv/
 
 # Data, local only, never commit
 data/*.db
+data/*.bak
 data/*.sqlite
 data/*.sqlite3
 data/*.csv

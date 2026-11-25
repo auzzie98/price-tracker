@@ -8,6 +8,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException
 from fastapi.responses import FileResponse
+from price_tracker.config import load_settings
+from price_tracker.index import valid_sku_price_rows
 
 WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
 DB_PATH = Path(__file__).resolve().parents[1] / "data" / "price-tracker.db"
@@ -19,6 +21,20 @@ DATE_PATTERN = re.compile(
     r"\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})\b",
     re.IGNORECASE,
 )
+HOME_BASELINE_DATE = load_settings()["index_baseline_period"]
+
+
+def home_price_points(conn, sku_id):
+    rows = valid_sku_price_rows(conn, sku_id, HOME_BASELINE_DATE)
+    return [
+        {
+            "period": period,
+            "price_cents": price_cents,
+            "price_dollars": price_cents / 100,
+            "retailers_used": retailers_used,
+        }
+        for period, price_cents, retailers_used in rows
+    ]
 
 
 def page_response(relative_path):
@@ -168,7 +184,23 @@ def receipt_preview(submission_id):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok"}
+    import sqlite3
+
+    conn = sqlite3.connect(str(DB_PATH))
+    try:
+        observation_count = conn.execute(
+            "SELECT COUNT(*) FROM observations"
+        ).fetchone()[0]
+        last_approved_at = conn.execute(
+            "SELECT MAX(created_at) FROM receipt_submissions WHERE status = 'approved'"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    return {
+        "status": "ok",
+        "observation_count": observation_count,
+        "last_approved_at": last_approved_at,
+    }
 
 @app.get("/api/indexes")
 def api_indexes():
@@ -237,10 +269,15 @@ def product_retailer_prices(model_id: str):
     conn.row_factory = sqlite3.Row
     try:
         rows = conn.execute(
-            """SELECT id, retailer_id, price_cents, in_stock, observed_at, source_url
-               FROM observations
-               WHERE sku_id = ?
-               ORDER BY observed_at DESC""",
+            """SELECT o.id, o.retailer_id, o.price_cents, o.in_stock,
+                      o.observed_at, o.source_url,
+                      exclusions.observation_id AS excluded_observation_id,
+                      exclusions.reason AS exclusion_reason
+               FROM observations o
+               LEFT JOIN observation_exclusions exclusions
+                 ON exclusions.observation_id = o.id
+               WHERE o.sku_id = ?
+               ORDER BY o.observed_at DESC""",
             (model_id,),
         ).fetchall()
         configured = {product["id"]: product for product in load_products()}
@@ -257,7 +294,18 @@ def product_retailer_prices(model_id: str):
                 continue
             source_url = row["source_url"]
             is_baseline = source_url == "Nov 23, 2026 baseline snapshot"
-            label = "Baseline" if is_baseline else "Approved receipt"
+            is_mock = "example.com/mock" in source_url.lower()
+            is_excluded = row["excluded_observation_id"] is not None
+            if is_baseline:
+                label = "Baseline"
+            elif is_mock:
+                label = "Mock data"
+            elif source_url.startswith("web/uploads/"):
+                label = "Approved receipt"
+            elif source_url.startswith(("http://", "https://")):
+                label = "Retailer page"
+            else:
+                label = "Unverified source"
             result.append({
                 "observation_id": row["id"],
                 "retailer_id": row["retailer_id"],
@@ -268,6 +316,9 @@ def product_retailer_prices(model_id: str):
                 "observed_at": row["observed_at"],
                 "source_url": source_url,
                 "source_label": label,
+                "is_mock": is_mock,
+                "is_excluded": is_excluded,
+                "exclusion_reason": row["exclusion_reason"],
                 "product_url": product_url.get(row["retailer_id"]) if product_url else None,
             })
     finally:
@@ -311,17 +362,71 @@ def api_product_history(model_id: str):
     }
 
 @app.get("/api/movers")
-def api_movers():
-    from price_tracker.db import connect
+def api_movers(range: str = "1d"):
     import sqlite3
-    db_path = str(DB_PATH)
-    conn = sqlite3.connect(db_path)
-    rows = conn.execute("SELECT sku_id, period, median_price_cents FROM sku_prices ORDER BY period DESC LIMIT 10").fetchall()
-    conn.close()
-    movers = []
-    for sku_id, period, median_price_cents in rows:
-        movers.append({"sku_id": sku_id, "period": period, "price_cents": median_price_cents, "price_dollars": median_price_cents / 100})
-    return {"movers": movers}
+    from datetime import date, timedelta
+    from price_tracker.config import load_products
+
+    range_days = {"1d": 1, "1w": 7}
+    if range not in range_days:
+        raise HTTPException(status_code=400, detail="Range must be 1d or 1w")
+
+    conn = sqlite3.connect(str(DB_PATH))
+    try:
+        all_points = {}
+        for product in load_products():
+            points = home_price_points(conn, product["id"])
+            if points:
+                all_points[product["id"]] = points
+    finally:
+        conn.close()
+
+    if not all_points:
+        return {"range": range, "cheaper": [], "pricier": []}
+
+    latest_period = max(
+        point["period"]
+        for points in all_points.values()
+        for point in points
+    )
+    comparison_period = (
+        date.fromisoformat(latest_period) - timedelta(days=range_days[range])
+    ).isoformat()
+    products_by_id = {product["id"]: product for product in load_products()}
+    cheaper = []
+    pricier = []
+
+    for sku_id, points in all_points.items():
+        by_period = {point["period"]: point for point in points}
+        current = by_period.get(latest_period)
+        previous = by_period.get(comparison_period)
+        if not current or not previous or previous["price_cents"] <= 0:
+            continue
+
+        change_percent = (
+            (current["price_cents"] - previous["price_cents"])
+            / previous["price_cents"]
+            * 100
+        )
+        if change_percent == 0:
+            continue
+        mover = {
+            "sku_id": sku_id,
+            "model": products_by_id[sku_id]["model"],
+            "category": products_by_id[sku_id]["category"],
+            "period": latest_period,
+            "price_cents": current["price_cents"],
+            "change_percent": change_percent,
+        }
+        (cheaper if change_percent < 0 else pricier).append(mover)
+
+    cheaper.sort(key=lambda item: item["change_percent"])
+    pricier.sort(key=lambda item: item["change_percent"], reverse=True)
+    return {
+        "range": range,
+        "cheaper": cheaper[:5],
+        "pricier": pricier[:5],
+    }
 
 @app.get("/upload-receipt", include_in_schema=False)
 def upload_receipt_page():
@@ -754,23 +859,29 @@ def reset_submission_to_pending(submission_id: int):
 
 @app.get("/api/retailers")
 def retailers_api():
-    return {"retailers": [{"id": item_id, "name": name} for item_id, name in get_retailer_options()]}
+    from price_tracker.config import load_retailers
+
+    return {
+        "retailers": [
+            {
+                "id": retailer["id"],
+                "name": retailer["name"],
+                "base_url": retailer["base_url"],
+            }
+            for retailer in load_retailers()
+        ]
+    }
 
 @app.get("/api/catalog")
 def catalog_api():
     from price_tracker.config import load_products
     from price_tracker.db import connect
     conn = connect(DB_PATH)
-    conn.row_factory = __import__("sqlite3").Row
     try:
         products = []
         for product in load_products():
-            row = conn.execute(
-                """SELECT median_price_cents, period
-                   FROM sku_prices WHERE sku_id = ?
-                   ORDER BY period DESC LIMIT 1""",
-                (product["id"],),
-            ).fetchone()
+            price_points = home_price_points(conn, product["id"])
+            latest = price_points[-1] if price_points else None
             products.append({
                 "id": product["id"],
                 "mpn": product["mpn"],
@@ -778,8 +889,11 @@ def catalog_api():
                 "model": product["model"],
                 "category": product["category"],
                 "chip": product["chip"],
-                "price_cents": row["median_price_cents"] if row else None,
-                "period": row["period"] if row else None,
+                "price_cents": latest["price_cents"] if latest else None,
+                "period": latest["period"] if latest else None,
+                "price_points": price_points,
+                "retailer_urls": product.get("urls", {}),
+                "home_offer": product.get("home_offer"),
             })
     finally:
         conn.close()
@@ -812,7 +926,7 @@ def category_page():
 
 @app.get("/gpus", include_in_schema=False)
 def gpus_page():
-    return page_response("category.html")
+    return page_response("gpus.html")
 
 @app.get("/cpus", include_in_schema=False)
 def cpus_page():

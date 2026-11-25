@@ -41,6 +41,13 @@ CREATE TABLE IF NOT EXISTS observations (
   FOREIGN KEY (retailer_id) REFERENCES retailers(id)
 );
 
+CREATE TABLE IF NOT EXISTS observation_exclusions (
+  observation_id INTEGER PRIMARY KEY,
+  reason TEXT NOT NULL,
+  excluded_at TEXT NOT NULL,
+  FOREIGN KEY (observation_id) REFERENCES observations(id)
+);
+
 CREATE TABLE IF NOT EXISTS sku_prices (
   sku_id TEXT NOT NULL,
   period TEXT NOT NULL,

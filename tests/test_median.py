@@ -34,6 +34,11 @@ class TestMedian(unittest.TestCase):
                 observed_at TEXT NOT NULL, sku_id TEXT NOT NULL, retailer_id TEXT NOT NULL,
                 price_cents INTEGER NOT NULL, in_stock INTEGER NOT NULL, source_url TEXT NOT NULL
             );
+            CREATE TABLE observation_exclusions (
+                observation_id INTEGER PRIMARY KEY,
+                reason TEXT NOT NULL,
+                excluded_at TEXT NOT NULL
+            );
             CREATE TABLE sku_prices (
                 sku_id TEXT NOT NULL, period TEXT NOT NULL,
                 median_price_cents INTEGER NOT NULL, retailers_used INTEGER NOT NULL,
@@ -112,6 +117,29 @@ class TestMedian(unittest.TestCase):
         self.assertIsNotNone(row)
         self.assertEqual(row[0], 50000)
         self.assertEqual(row[1], 1)
+
+    def test_mock_and_excluded_observations_do_not_enter_medians(self):
+        self._insert_observations(
+            [
+                ("2026-01-01T10:00:00", "sku-1", "r1", 10000, 1, "https://example.com/mock/1"),
+                ("2026-01-01T10:00:00", "sku-1", "r2", 50000, 1, "https://retailer.example/2"),
+                ("2026-01-01T10:00:00", "sku-1", "r3", 90000, 1, "web/uploads/old-receipt.png"),
+            ]
+        )
+        receipt_id = self.conn.execute(
+            "SELECT id FROM observations WHERE source_url = ?",
+            ("web/uploads/old-receipt.png",),
+        ).fetchone()[0]
+        self.conn.execute(
+            "INSERT INTO observation_exclusions VALUES (?, ?, ?)",
+            (receipt_id, "Old receipt, not a current price.", "2026-01-02T00:00:00Z"),
+        )
+        self.conn.commit()
+
+        build_sku_prices(self.conn)
+
+        row = self._fetch_sku_price()
+        self.assertEqual(row, (50000, 1))
 
     def tearDown(self):
         self.conn.close()

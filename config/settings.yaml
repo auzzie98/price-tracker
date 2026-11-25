@@ -3,6 +3,7 @@
 
 refresh_hours: 6
 period: day
+index_baseline_period: "2026-11-23"
 request_delay_seconds: 2
 user_agent: "Price-Tracker-Prototype/0.1 (open source price research, contact to be added before public launch)"
 database_path: "data/price-tracker.db"

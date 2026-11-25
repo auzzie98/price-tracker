@@ -1,11 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Product - Price Tracker</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body>
+<body class="product-document">
   <header class="header-bar">
     <a class="header-logo" href="/">Price Tracker</a>
     <nav class="header-nav" aria-label="Primary navigation">
@@ -18,189 +19,145 @@
     </nav>
   </header>
 
-  <main class="product-page">
-    <section class="product-heading">
-      <h1 id="product-title">Product</h1>
-      <p id="product-meta"></p>
-      <p class="mock-label">Real data, baseline Nov 23, 2026, Black Friday week snapshot.</p>
+  <main class="product-page" id="product-page" aria-live="polite">
+    <nav class="product-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <a id="product-category-link" href="/">Category</a>
+      <span aria-hidden="true">/</span>
+      <span id="product-breadcrumb-name">Loading product</span>
+    </nav>
+
+    <section class="product-intro" aria-labelledby="product-title">
+      <div class="product-intro-copy">
+        <p class="product-eyebrow" id="product-category">Product</p>
+        <h1 id="product-title">Loading product</h1>
+        <p class="product-subhead">
+          <span id="product-brand">-</span>
+          <span class="product-subhead-separator" aria-hidden="true">/</span>
+          <span id="product-type">-</span>
+          <span class="product-mpn">MPN <code id="product-mpn">-</code></span>
+        </p>
+      </div>
+      <div class="product-price-card">
+        <strong id="product-current-price">-</strong>
+        <span class="product-price-label" id="product-price-label">Median price</span>
+      </div>
     </section>
 
-    <section class="trend-section product-trend">
-      <h2 class="trend-title">Trend</h2>
-      <p class="trend-subtitle">Price in dollars for the selected model.</p>
-      <div class="trend-legend">
-        <div class="trend-model-name" id="trend-model-name">Product</div>
-        <div class="trend-price-row">
-          <span class="trend-price" id="trend-price">$579.99</span>
+    <section class="product-panel product-chart-panel" aria-labelledby="product-chart-title">
+      <div class="product-section-heading">
+        <div>
+          <h2 id="product-chart-title">Price history</h2>
+          <p>Dollar price by date. Only verified price points are shown.</p>
+        </div>
+        <p class="product-change-key"><span class="price-dropped">Green</span> means the price dropped. <span class="price-rose">Red</span> means the price rose.</p>
+      </div>
+      <div class="product-chart-wrap">
+        <canvas id="product-chart" role="img" aria-label="Product price history chart"></canvas>
+        <p class="product-chart-empty" id="product-chart-empty">-</p>
+        <p class="product-chart-tooltip" id="product-chart-tooltip" aria-live="polite"></p>
+      </div>
+      <div class="product-chart-controls">
+        <div class="product-range-buttons" role="group" aria-label="Price history range">
+          <button type="button" data-range="1m" aria-pressed="false">1M</button>
+          <button type="button" data-range="3m" aria-pressed="false">3M</button>
+          <button type="button" data-range="6m" aria-pressed="false">6M</button>
+          <button type="button" data-range="1y" aria-pressed="false">1Y</button>
+          <button type="button" data-range="all" aria-pressed="true">All</button>
+        </div>
+        <span class="product-chart-units">Price in dollars</span>
+      </div>
+    </section>
+
+    <section class="product-stats" aria-label="Price statistics">
+      <article class="product-stat-card">
+        <h2>Period low</h2>
+        <strong id="product-period-low">-</strong>
+      </article>
+      <article class="product-stat-card">
+        <h2>Period high</h2>
+        <strong id="product-period-high">-</strong>
+      </article>
+      <article class="product-stat-card">
+        <h2>Median price</h2>
+        <strong id="product-period-median">-</strong>
+      </article>
+      <article class="product-stat-card">
+        <h2>Observations</h2>
+        <strong id="product-observation-count">-</strong>
+      </article>
+    </section>
+
+    <section class="product-panel product-table-panel" aria-labelledby="product-buy-title">
+      <div class="product-section-heading">
+        <div>
+          <h2 id="product-buy-title">Where to buy</h2>
+          <p>Prices come from verified catalog offers or the latest valid observation.</p>
         </div>
       </div>
-      <div class="trend-hover-date" id="trend-hover-date"></div>
-      <canvas id="product-chart" width="1000" height="300"></canvas>
+      <div class="product-table-scroll">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th scope="col">Retailer</th>
+              <th scope="col">Price</th>
+              <th scope="col">Stock</th>
+              <th scope="col">Link</th>
+            </tr>
+          </thead>
+          <tbody id="product-retailer-rows">
+            <tr><td colspan="4" class="product-empty-cell">Loading retailer prices</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
-    <div class="time-toggles">
-      <button class="toggle" data-range="1d">1D</button>
-      <button class="toggle" data-range="1w">1W</button>
-      <button class="toggle active" data-range="1m">1M</button>
-      <button class="toggle" data-range="1y">1Y</button>
-      <button class="toggle" data-range="all">All</button>
-    </div>
 
-    <section class="retailer-section">
-      <h3 class="section-header">Approved prices and retailers</h3>
-      <p id="median-price-label" class="model-label"></p>
-      <table class="retailer-table">
-        <thead>
-          <tr><th>Source</th><th>Date</th><th>Retailer</th><th>Price</th><th>In stock</th><th>Link</th></tr>
-        </thead>
-        <tbody id="retailer-rows"></tbody>
-      </table>
+    <section class="product-panel product-table-panel" aria-labelledby="product-observations-title">
+      <div class="product-section-heading">
+        <div>
+          <h2 id="product-observations-title">Latest observations</h2>
+          <p>Excluded receipts and mock data are not included.</p>
+        </div>
+      </div>
+      <div class="product-table-scroll">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th scope="col">Retailer</th>
+              <th scope="col">Date</th>
+              <th scope="col">Source</th>
+              <th scope="col">Price</th>
+            </tr>
+          </thead>
+          <tbody id="product-observation-rows">
+            <tr><td colspan="4" class="product-empty-cell">Loading observations</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
+
+    <section class="product-other-section" aria-labelledby="product-other-title">
+      <div class="product-section-heading">
+        <div>
+          <h2 id="product-other-title">Other models</h2>
+          <p>Other models in this category.</p>
+        </div>
+      </div>
+      <div class="product-other-grid" id="product-other-models">
+        <p class="product-empty-cell">Loading models</p>
+      </div>
+    </section>
+
+    <p class="product-page-error" id="product-page-error" role="status" hidden></p>
   </main>
 
+  <footer class="site-footer">
+    <a href="/methodology">How we calculate prices</a>
+    <span>Prices are shown with their source and date.</span>
+  </footer>
+
   <script src="/static/js/chart.js"></script>
-  <script>
-    var pathParts = window.location.pathname.split('/').filter(Boolean);
-    var productId = pathParts[pathParts.length - 1] || 'asus-dual-rtx5070-12g';
-    var selectedRange = '1m';
-    var liveValues = null;
-    var liveDates = null;
-
-    fetch('/api/products/' + encodeURIComponent(productId) + '/history')
-      .then(function(response) { return response.ok ? response.json() : null; })
-      .then(function(data) {
-        if (!data || !data.history.length) {
-          document.getElementById('trend-price').textContent = 'No data yet';
-          document.getElementById('trend-model-name').textContent = data && data.model ? data.model.model : 'Product';
-          liveValues = [];
-          liveDates = [];
-          drawProductChart();
-          return;
-        }
-        liveValues = data.history.map(function(point) { return point.median_price_dollars; });
-        liveDates = data.history.map(function(point) { return point.date; });
-        document.title = data.model.model + ' - Price Tracker';
-        document.getElementById('product-title').textContent = data.model.model;
-        document.getElementById('product-meta').textContent =
-          'MPN ' + data.model.mpn + ' | ' + data.model.category;
-        drawProductChart();
-      })
-      .catch(function() {});
-
-    fetch('/api/catalog')
-      .then(function(response) { return response.ok ? response.json() : null; })
-      .then(function(data) {
-        if (!data) return;
-        var catalogProduct = data.products.find(function(item) { return item.id === productId; });
-        if (!catalogProduct) return;
-        document.title = catalogProduct.model + ' - Price Tracker';
-        document.getElementById('product-title').textContent = catalogProduct.model;
-        document.getElementById('product-meta').textContent =
-          'MPN ' + catalogProduct.mpn + ' | ' + catalogProduct.category;
-      })
-      .catch(function() {});
-
-    function drawProductChart() {
-      var canvas = document.getElementById('product-chart');
-      var ctx = canvas.getContext('2d');
-      var dpr = window.devicePixelRatio || 1;
-      var width = Math.max(1, canvas.clientWidth || canvas.offsetWidth);
-      var height = 300;
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, width, height);
-
-      var values = liveValues || [];
-      if (!values.length) {
-        ctx.fillStyle = '#9CA3AF';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('No data yet', width / 2, height / 2);
-        return;
-      }
-      if (window.PriceTrackerChart) {
-        window.PriceTrackerChart.draw(
-          canvas,
-          values,
-          selectedRange,
-          document.getElementById('trend-price'),
-          document.getElementById('trend-hover-date'),
-          liveDates
-        );
-      }
-    }
-
-    var retailerRows = document.getElementById('retailer-rows');
-    Promise.all([
-      fetch('/api/catalog'),
-      fetch('/api/products/' + encodeURIComponent(productId) + '/retailer-prices'),
-      fetch('/api/products/' + encodeURIComponent(productId) + '/history')
-    ]).then(function(responses) {
-      return Promise.all(responses.map(function(response) {
-        return response.ok ? response.json() : null;
-      }));
-    }).then(function(results) {
-      var catalogData = results[0];
-      var retailerData = results[1];
-      var historyData = results[2];
-      if (!catalogData || !retailerData) return;
-      var catalogProduct = catalogData.products.find(function(item) {
-        return item.id === productId;
-      });
-      if (!catalogProduct) return;
-      var retailerPrices = retailerData.retailer_prices || [];
-      retailerPrices.sort(function(a, b) {
-        return new Date(a.observed_at) - new Date(b.observed_at);
-      });
-
-      if (!retailerPrices.length) {
-        retailerRows.innerHTML = '<tr><td colspan="6">No clean retailer data yet.</td></tr>';
-        document.getElementById('median-price-label').textContent = 'Median price: No data yet';
-        return;
-      }
-
-      var html = '';
-      retailerPrices.forEach(function(row) {
-        var date = new Date(row.observed_at);
-        var dateLabel = row.source_label === 'Baseline'
-          ? 'Nov 23, 2026'
-          : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        var sourceLabel = row.source_label === 'Baseline' ? 'Baseline' : 'Approved';
-        var link = row.product_url
-          ? '<a href="' + row.product_url + '" target="_blank" rel="noopener">View exact product</a>'
-          : 'No exact page recorded';
-        html += '<tr>' +
-          '<td>' + sourceLabel + '</td>' +
-          '<td>' + dateLabel + '</td>' +
-          '<td>' + row.retailer_name + '</td>' +
-          '<td>$' + row.price_dollars.toFixed(2) + '</td>' +
-          '<td><span class="stock-yes">' + (row.in_stock ? 'In stock' : 'Out of stock') + '</span></td>' +
-          '<td>' + link + '</td>' +
-          '</tr>';
-      });
-      retailerRows.innerHTML = html;
-      if (historyData && historyData.history && historyData.history.length) {
-        var latest = historyData.history[historyData.history.length - 1];
-        document.getElementById('median-price-label').textContent =
-          'Median price: $' + latest.median_price_dollars.toFixed(2);
-      } else {
-        document.getElementById('median-price-label').textContent =
-          'Median price: $' + (catalogProduct.price_cents / 100).toFixed(2);
-      }
-    }).catch(function() {});
-
-    document.querySelectorAll('.time-toggles .toggle').forEach(function(button) {
-      button.addEventListener('click', function() {
-        document.querySelector('.time-toggles .toggle.active').classList.remove('active');
-        button.classList.add('active');
-        selectedRange = button.dataset.range;
-        drawProductChart();
-      });
-    });
-
-    drawProductChart();
-    window.addEventListener('resize', drawProductChart);
-  </script>
+  <script src="/static/js/product.js"></script>
 </body>
 </html>

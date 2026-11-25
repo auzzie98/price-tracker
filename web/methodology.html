@@ -24,7 +24,7 @@
 <p>One observation is one scraped data point: timestamp, SKU, retailer, price, in-stock flag, and source URL. Prices are stored in cents as an integer in the database. Display shows dollars on the site.</p>
 
 <h2>Median price per SKU</h2>
-<p>For each SKU and period, the median price is calculated across all in-stock retailers. Out-of-stock listings are ignored for the median calculation. If a SKU has no in-stock price in a period, it has no sku_prices row for that period — a zero price is never written.</p>
+<p>For each SKU and period, the median price is calculated across all in-stock retailers. Out-of-stock listings are ignored for the median calculation. If a SKU has no in-stock price in a period, it has no sku_prices row for that period. A zero price is never written.</p>
 
 <h2>Index calculation</h2>
 <p>The index uses a chained, equal weighted, matched model, starting at 100. The model works as follows:</p>
@@ -50,18 +50,22 @@
 <p>If a SKU has no in-stock observation for 7 consecutive days, it leaves the basket (no sku_prices row, no index contribution). When the SKU returns with an in-stock price, it re-enters from its second period after return, following the matched model rule. This prevents a single out-of-stock period from permanently removing a SKU while also preventing stale out-of-stock data from driving the index indefinitely.</p>
 
 <h2>Cold start</h2>
-<p>Charts begin at launch and history accumulates from day one. There is no backfill in v1. The first data point starts the history; subsequent periods add to it.</p>
+<p>Charts begin at launch and history accumulates from day one. There is no backfill in v1. The first data point starts the history; subsequent periods add to it. The current launch baseline is Nov 23, 2026. Earlier test data is not included in the published index.</p>
 
 <h2>Revision rule</h2>
-<p>If a rebuild changes published numbers, the site must say so, with the dates affected and the reason. See the methodology page for the current rule.</p>
+<p>If a rebuild changes published numbers, the site must say so, with the dates affected and the reason. The correction below records the current revision.</p>
+
+<h2>Index correction, Nov 24, 2026</h2>
+<p>The earlier Home page values were not valid market movements. The GPU value of 81.03 on Nov 24 had zero matched products. The CPU values of 89.23 on Nov 23 and 105.96 on Nov 24 included test history, an old approved $220.00 Ryzen 5 9600X receipt, and a Nov 24 Ryzen 7 9800X3D row without a matching source record. The RAM value of 268.02 on Nov 23 came from test history for the Corsair Vengeance 32GB DDR5-6000 CL30 kit. No RAM price was recorded on Nov 24.</p>
+<p>The corrected index starts at 100.00 on Nov 23 for each category, using 9 GPUs, 10 CPUs, and 7 RAM kits. There are no valid later price records yet, so no category change is shown. The old receipt remains in the source records but is excluded from the price calculations.</p>
 
 <h2>Sites scraped</h2>
 <ul>
-<li>B and H — enabled, price check needed</li>
-<li>Micro Center — enabled</li>
-<li>Best Buy — disabled (Cloudflare 403 on plain fetch)</li>
-<li>Newegg — disabled (Cloudflare 403 / CAPTCHA on plain fetch)</li>
-<li>Amazon — disabled (expected to block aggressively)</li>
+<li>B and H, enabled, price check needed</li>
+<li>Micro Center, enabled</li>
+<li>Best Buy, disabled (Cloudflare 403 on plain fetch)</li>
+<li>Newegg, disabled (Cloudflare 403 / CAPTCHA on plain fetch)</li>
+<li>Amazon, disabled (expected to block aggressively)</li>
 </ul>
 
 <p>Every index page links to this methodology page.</p>

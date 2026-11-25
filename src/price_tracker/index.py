@@ -34,6 +34,12 @@ def build_sku_prices(conn: sqlite3.Connection) -> None:
         SELECT sku_id, substr(observed_at, 1, 10) AS period, price_cents
         FROM observations
         WHERE in_stock = 1
+          AND source_url NOT LIKE '%example.com/mock%'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM observation_exclusions exclusions
+              WHERE exclusions.observation_id = observations.id
+          )
         ORDER BY sku_id, period
         """
     ).fetchall()
@@ -52,6 +58,35 @@ def build_sku_prices(conn: sqlite3.Connection) -> None:
             (sku_id, period, med, len(prices)),
         )
     conn.commit()
+
+
+def valid_sku_price_rows(
+    conn: sqlite3.Connection, sku_id: str, baseline_period: str
+) -> list[tuple[str, int, int]]:
+    """Return post-baseline prices backed by an eligible in-stock observation."""
+    return conn.execute(
+        """
+        SELECT sp.period, sp.median_price_cents, sp.retailers_used
+        FROM sku_prices sp
+        WHERE sp.sku_id = ?
+          AND sp.period >= ?
+          AND EXISTS (
+              SELECT 1
+              FROM observations o
+              WHERE o.sku_id = sp.sku_id
+                AND substr(o.observed_at, 1, 10) = sp.period
+                AND o.in_stock = 1
+                AND o.source_url NOT LIKE '%example.com/mock%'
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM observation_exclusions exclusions
+                    WHERE exclusions.observation_id = o.id
+                )
+          )
+        ORDER BY sp.period
+        """,
+        (sku_id, baseline_period),
+    ).fetchall()
 
 
 def compute_index(
@@ -105,40 +140,36 @@ def build_index_values(conn: sqlite3.Connection) -> None:
     Safe to rerun: uses INSERT OR REPLACE, so no duplicate rows.
     Each new period adds one row per category and leaves old rows alone.
     """
-    from price_tracker.config import load_products
+    from price_tracker.config import load_products, load_settings
 
     configured = {
         product["id"]: product["category"]
         for product in load_products()
     }
+    baseline_period = load_settings()["index_baseline_period"]
     categories = ["GPUs", "CPUs", "RAM"]
 
     for category in categories:
         skus = [
-            r[0]
-            for r in conn.execute(
-                "SELECT id FROM skus WHERE category = ?", (category,)
+            sku_id
+            for sku_id, database_category in conn.execute(
+                "SELECT id, category FROM skus WHERE category = ?", (category,)
             ).fetchall()
-            if r[0] in configured
+            if sku_id in configured and configured[sku_id] == database_category
         ]
 
         if not skus:
             continue
 
-        placeholders = ",".join("?" for _ in skus)
-        rows = conn.execute(
-            f"""
-            SELECT sku_id, period, median_price_cents
-            FROM sku_prices
-            WHERE sku_id IN ({placeholders})
-            ORDER BY sku_id, period
-            """,
-            skus,
-        ).fetchall()
-
         period_prices: dict[str, dict[str, float]] = defaultdict(dict)
-        for sku_id, period, price_cents in rows:
-            period_prices[period][sku_id] = float(price_cents)
+        for sku_id in skus:
+            for period, price_cents, _ in valid_sku_price_rows(
+                conn, sku_id, baseline_period
+            ):
+                period_prices[period][sku_id] = float(price_cents)
+
+        if baseline_period not in period_prices:
+            continue
 
         index_rows = compute_index(period_prices)
 
